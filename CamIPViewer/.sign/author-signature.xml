@@ -4,7 +4,7 @@
 <SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"></SignatureMethod>
 <Reference URI="bin%2Fcamipviewer">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></DigestMethod>
-<DigestValue>deuij71wShqoXf6C6QHByul7/lgWmcdZu/1qDd2wm4U=</DigestValue>
+<DigestValue>vEoPRygKHKrzC210Ty1pO36mrV4aYvlIlUmY6jpQio0=</DigestValue>
 </Reference>
 <Reference URI="res%2Fedje%2Fcamipviewer.edj">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></DigestMethod>
@@ -27,9 +27,9 @@
 </Reference>
 </SignedInfo>
 <SignatureValue>
-XgzHQbTID7IMXBrRFYtm4x72emUrq6lA+a6H2JEMrqRuoW75FdPUZZd+BP7O9JEumDYzlxiYYjZO
-tMuPUT+Lyg/3JfYbCqVroNY+PzYpNG8ezZOEUev9FsACU448ugtjIlA53JwX3I9KXkgJooK6L8un
-ENLk/aPbFktDp1g347U=
+gBqV201xOy5U5coq5dY21ffRqMJUO/5alxUQZbP9XkRv7i0F8zzegxJin9GmzxJ1djBc1i2wAES8
+Og8XRkJLYYx/ePjG8DsDRYXm0mUAiyjPd6JHPPy8PNbNebm47NTSgZvjKwYv/YKimccJ6kuEuSGq
+ayB5DJta3qGqV7/w5Ec=
 </SignatureValue>
 <KeyInfo>
 <X509Data>

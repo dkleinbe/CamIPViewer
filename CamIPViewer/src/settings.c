@@ -17,7 +17,7 @@
 typedef struct _App_settings
 {
 	char cam_ip[CAM_IP_STRLEN];
-	char cap_port[CAM_PORT_STRLEN];
+	char cam_port[CAM_PORT_STRLEN];
 } App_settings;
 
 char *main_menu_names[] = {
@@ -84,16 +84,26 @@ static void _gl_del(void *data, Evas_Object *obj)
 }
 
 static void
-_entry_enter_click(void *data, Evas_Object *obj, void *event_info)
+_entry_ip_enter_click(void *data, Evas_Object *obj, void *event_info)
 {
 	Evas_Object *genlist = (Evas_Object *)data;
 
-
-
-	printf("enter key clicked!!\n");
 	const char *txt = elm_entry_entry_get(obj);
 
 	preference_set_string(SETTING_CAM_IP, txt);
+	//evas_object_hide(genlist);
+	elm_naviframe_item_pop(genlist);
+
+}
+
+static void
+_entry_port_enter_click(void *data, Evas_Object *obj, void *event_info)
+{
+	Evas_Object *genlist = (Evas_Object *)data;
+
+	const char *txt = elm_entry_entry_get(obj);
+
+	preference_set_string(SETTING_CAM_PORT, txt);
 	//evas_object_hide(genlist);
 	elm_naviframe_item_pop(genlist);
 
@@ -109,8 +119,8 @@ _setting_finished_cb(void *data, Elm_Object_Item *it)
 {
 	Evas_Object *genlist = (Evas_Object *)data;
 
-	//evas_object_hide(genlist);
-	elm_naviframe_item_pop(genlist);
+	evas_object_hide(genlist);
+	//elm_naviframe_item_pop(genlist);
 	return EINA_TRUE;
 }
 
@@ -182,6 +192,7 @@ _setting_cam_ip_cb(void *data, Evas_Object *obj, void *event_info EINA_UNUSED)
 	limit_filter_data.max_byte_count = 100;
 	elm_entry_markup_filter_append(entry, elm_entry_filter_limit_size, &limit_filter_data);
 	elm_entry_input_panel_layout_set(entry, ELM_INPUT_PANEL_LAYOUT_IP);
+	elm_entry_input_panel_return_key_type_set(entry, ELM_INPUT_PANEL_RETURN_KEY_TYPE_DONE);
 
 	elm_object_part_text_set(entry, "elm.guide", "192.168.255.255");
 	elm_entry_cursor_end_set(entry);
@@ -193,7 +204,7 @@ _setting_cam_ip_cb(void *data, Evas_Object *obj, void *event_info EINA_UNUSED)
 
 	evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 	evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
-	evas_object_smart_callback_add(entry, "activated", _entry_enter_click, naviframe);
+	evas_object_smart_callback_add(entry, "activated", _entry_ip_enter_click, naviframe);
 
 	elm_object_part_content_set(layout, "entry_part", entry);
 	elm_object_content_set(scroller, layout);
@@ -201,9 +212,32 @@ _setting_cam_ip_cb(void *data, Evas_Object *obj, void *event_info EINA_UNUSED)
 	nf_it = elm_naviframe_item_push(naviframe, _("Single line entry"), NULL, NULL, scroller, "empty");
 	elm_naviframe_item_pop_cb_set(nf_it, _setting_finished_cb, scroller);
 }
-
 /*
- * @brief Function will be operated when "Cam IP" menu is clicked
+ *
+ */
+static bool
+cam_port_load()
+{
+	bool is_existing = false;
+	char *port;
+
+	preference_is_existing(SETTING_CAM_PORT, &is_existing);
+	if (is_existing)
+	{
+		preference_get_string(SETTING_CAM_PORT, &port);
+		strcpy(_app_settings.cam_port, port);
+	}
+	else
+	{
+		_app_settings.cam_port[0] = 0x0;
+		return false;
+	}
+
+
+	return true;
+}
+/*
+ * @brief Function will be operated when "Port" menu is clicked
  * @param[in] data The data to be passed to the callback function
  * @param[in] obj The Evas object handle to be passed to the callback function
  * @param[in] event_info The system event information
@@ -211,7 +245,60 @@ _setting_cam_ip_cb(void *data, Evas_Object *obj, void *event_info EINA_UNUSED)
 static void
 _setting_cam_ip_port_cb(void *data, Evas_Object *obj, void *event_info EINA_UNUSED)
 {
+	char edj_path[PATH_MAX] = {0, };
+	appdata_s *ad = data;
+	Evas_Object *naviframe = ad->naviframe;
+	Evas_Object *layout = NULL;
+	Evas_Object *entry = NULL;
+	Evas_Object *scroller = NULL;
+	Elm_Object_Item *nf_it = NULL;
+	static Elm_Entry_Filter_Limit_Size limit_filter_data;
 
+	/* Unhighlight Item */
+	elm_genlist_item_selected_set((Elm_Object_Item *)event_info, EINA_FALSE);
+
+	app_get_resource(EDJ_FILE, edj_path, (int)PATH_MAX);
+	scroller = elm_scroller_add(naviframe);
+	evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
+	evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+
+	layout = elm_layout_add(scroller);
+	if (! elm_layout_file_set(layout, edj_path, "entry_layout"))
+	{
+		dlog_print(DLOG_ERROR, "SETTINGS_UI", "Nananan");
+	}
+	evas_object_size_hint_align_set(layout, EVAS_HINT_FILL, 0.0);
+	evas_object_size_hint_weight_set(layout, EVAS_HINT_EXPAND, 0.0);
+
+	entry = elm_entry_add(layout);
+	elm_entry_single_line_set(entry, EINA_TRUE);
+	elm_entry_scrollable_set(entry, EINA_TRUE);
+	elm_scroller_policy_set(entry, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_AUTO);
+	//evas_object_smart_callback_add(entry, "maxlength,reached", maxlength_reached, nf);
+
+	limit_filter_data.max_char_count = 0;
+	limit_filter_data.max_byte_count = 100;
+	elm_entry_markup_filter_append(entry, elm_entry_filter_limit_size, &limit_filter_data);
+	elm_entry_input_panel_layout_set(entry, ELM_INPUT_PANEL_LAYOUT_IP);
+	elm_entry_input_panel_return_key_type_set(entry, ELM_INPUT_PANEL_RETURN_KEY_TYPE_DONE);
+
+	elm_object_part_text_set(entry, "elm.guide", "437");
+	elm_entry_cursor_end_set(entry);
+	/*
+	 * load port ip setting
+	 */
+	cam_port_load();
+	elm_entry_entry_set(entry, _app_settings.cam_port);
+
+	evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+	evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
+	evas_object_smart_callback_add(entry, "activated", _entry_port_enter_click, naviframe);
+
+	elm_object_part_content_set(layout, "entry_part", entry);
+	elm_object_content_set(scroller, layout);
+
+	nf_it = elm_naviframe_item_push(naviframe, _("Single line entry"), NULL, NULL, scroller, "empty");
+	elm_naviframe_item_pop_cb_set(nf_it, _setting_finished_cb, scroller);
 }
 
 /*
