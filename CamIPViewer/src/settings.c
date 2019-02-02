@@ -62,6 +62,11 @@ App_setting _app_settings2[] = {
 	}
 };
 
+typedef struct _item_data {
+	int index;
+	Elm_Object_Item *item;
+} item_data;
+
 static Evas_Object *_app_naviframe;
 /*
  * @brief Function to get string on genlist title item's text part
@@ -80,10 +85,6 @@ _gl_title_text_get(void *data, Evas_Object *obj, const char *part)
 	return strdup(buf);
 }
 
-typedef struct _item_data {
-	int index;
-	Elm_Object_Item *item;
-} item_data;
 
 /*
  * @brief Function to get string on genlist item's text part
@@ -122,18 +123,7 @@ static void _gl_del(void *data, Evas_Object *obj)
 	if (id) free(id);
 }
 
-static void
-_entry_setting_enter_click(void *data, Evas_Object *obj, void *event_info)
-{
-	int setting_index = (int)data;
 
-	const char *txt = elm_entry_entry_get(obj);
-
-	preference_set_string(_app_settings2[setting_index].key, txt);
-
-	elm_naviframe_item_pop(_app_naviframe);
-
-}
 
 /*
  * @brief Function will be operated when manipulating setting value is finished
@@ -175,7 +165,29 @@ load_setting(int index)
 
 	return false;
 }
+/*
+ *
+ */
+static void
+_entry_setting_enter_click(void *data, Evas_Object *obj, void *event_info)
+{
+	int setting_index = -1;
+	item_data *id;
 
+	/* get item data */
+	id = (item_data *)elm_object_item_data_get((Elm_Object_Item *)data);
+	setting_index = id->index;
+
+	const char *txt = elm_entry_entry_get(obj);
+
+	preference_set_string(_app_settings2[setting_index].key, txt);
+	/* reload setting */
+	load_setting(setting_index);
+	elm_genlist_item_fields_update(id->item, "elm.text.1", ELM_GENLIST_ITEM_FIELD_TEXT);
+
+	elm_naviframe_item_pop(_app_naviframe);
+
+}
 
 /*
  * @brief Function will be operated when naviframe pop its own item
@@ -208,13 +220,14 @@ _setting_item_cb(void *data, Evas_Object *obj, void *event_info EINA_UNUSED)
 	Evas_Object *entry = NULL;
 	Evas_Object *scroller = NULL;
 	Elm_Object_Item *nf_it = NULL;
+	Elm_Object_Item *setting_item = (Elm_Object_Item *)event_info;
 	int setting_index = -1;
 	static Elm_Entry_Filter_Limit_Size limit_filter_data;
 
 	/* Unhighlight Item */
 	elm_genlist_item_selected_set((Elm_Object_Item *)event_info, EINA_FALSE);
 	/* get item data */
-	id = (item_data *)elm_object_item_data_get((Elm_Object_Item *)event_info);
+	id = (item_data *)elm_object_item_data_get(setting_item);
 	setting_index = id->index;
 
 	app_get_resource(EDJ_FILE, edj_path, (int)PATH_MAX);
@@ -244,15 +257,12 @@ _setting_item_cb(void *data, Evas_Object *obj, void *event_info EINA_UNUSED)
 
 	elm_object_part_text_set(entry, "elm.guide", _app_settings2[setting_index].guide);
 	elm_entry_cursor_end_set(entry);
-	/*
-	 * load setting
-	 */
-	load_setting(setting_index);
+
 	elm_entry_entry_set(entry, _app_settings2[setting_index].value);
 
 	evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 	evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
-	evas_object_smart_callback_add(entry, "activated", _entry_setting_enter_click, setting_index);
+	evas_object_smart_callback_add(entry, "activated", _entry_setting_enter_click, setting_item);
 
 	elm_object_part_content_set(layout, "entry_part", entry);
 	elm_object_content_set(scroller, layout);
@@ -309,6 +319,11 @@ create_settings_list_view(appdata_s *ad)
 	/* Main Menu Items Here */
 	for (index = 0 ; index < NB_SETTINGS; ++index)
 	{
+		/*
+		 * load setting
+		 */
+		load_setting(index);
+
 		id = calloc(sizeof(item_data), 1);
 		id->index = index;
 		id->item = elm_genlist_item_append(genlist, itc, id, NULL, ELM_GENLIST_ITEM_NONE, _setting_item_cb, ad);
