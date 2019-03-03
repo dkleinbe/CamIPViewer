@@ -4,15 +4,19 @@
 <SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"></SignatureMethod>
 <Reference URI="author-signature.xml">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></DigestMethod>
-<DigestValue>eCRB5BZGwLBCjAjekEsWGKr+C/F442dkuCG/hS4cT74=</DigestValue>
+<DigestValue>1dbsaR8VoSQMpbcRbR7wos/H8pqnFw75glBNqZaW5Dc=</DigestValue>
 </Reference>
 <Reference URI="bin%2Fcamipviewer">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></DigestMethod>
-<DigestValue>qINRCJHGtAY806i2ZYXMXkuv67qYyfevIQ6jZq8E3JY=</DigestValue>
+<DigestValue>6dMPTRmkhWlBt3E1JMtUoch4rGShs6HjJyVBO9noO1c=</DigestValue>
 </Reference>
 <Reference URI="res%2Fedje%2Fcamipviewer.edj">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></DigestMethod>
 <DigestValue>q5Yk5wKbYh/snnrhVneOvo6x8G9Zu3yQyhizf6iqOMU=</DigestValue>
+</Reference>
+<Reference URI="res%2Fimages%2F100_3.jpg">
+<DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></DigestMethod>
+<DigestValue>kuZPFdc+TkHvJ15m/9gzTUayvJSw2YV6zt8A/TyqoX0=</DigestValue>
 </Reference>
 <Reference URI="shared%2Fres%2Fcamipviewer.png">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></DigestMethod>
@@ -31,9 +35,9 @@
 </Reference>
 </SignedInfo>
 <SignatureValue>
-aLgMQEZE7WNYtgrBgwDnz3bnhLbDKkWGwvTscNuCL29XfiwhhOyfi/3ys7ZgJk8fyYIdcwPy/MK8
-opo5BC6bYalfr1T4X6BdqQWRQCQvVJfr9Eng3qf0CWoOuOqaxyj15TpPRfZaVi+bJgdJkrauj09P
-KwAWbJQ2VK+V3dW+600=
+DOrQUPfaRt8PmWYL1OhKhARzZw7hFIRuxze8Ay5AoJbxcFZy9SZ9i9fAXu18f+iCEcsz91DQ1ucL
+aPjU9ZQPj7pbMWnVFNry/AwYJ6h1xfjDA3IUxF/Twy7ilNZgWJjNPl8lMyehnfGtrSMe4dSAOLBN
+P2Ttm6Amw/WFM9909d0=
 </SignatureValue>
 <KeyInfo>
 <X509Data>

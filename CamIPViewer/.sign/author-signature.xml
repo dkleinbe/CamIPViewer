@@ -4,11 +4,15 @@
 <SignatureMethod Algorithm="http://www.w3.org/2001/04/xmldsig-more#rsa-sha256"></SignatureMethod>
 <Reference URI="bin%2Fcamipviewer">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></DigestMethod>
-<DigestValue>qINRCJHGtAY806i2ZYXMXkuv67qYyfevIQ6jZq8E3JY=</DigestValue>
+<DigestValue>6dMPTRmkhWlBt3E1JMtUoch4rGShs6HjJyVBO9noO1c=</DigestValue>
 </Reference>
 <Reference URI="res%2Fedje%2Fcamipviewer.edj">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></DigestMethod>
 <DigestValue>q5Yk5wKbYh/snnrhVneOvo6x8G9Zu3yQyhizf6iqOMU=</DigestValue>
+</Reference>
+<Reference URI="res%2Fimages%2F100_3.jpg">
+<DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></DigestMethod>
+<DigestValue>kuZPFdc+TkHvJ15m/9gzTUayvJSw2YV6zt8A/TyqoX0=</DigestValue>
 </Reference>
 <Reference URI="shared%2Fres%2Fcamipviewer.png">
 <DigestMethod Algorithm="http://www.w3.org/2001/04/xmlenc#sha256"></DigestMethod>
@@ -27,9 +31,9 @@
 </Reference>
 </SignedInfo>
 <SignatureValue>
-pcBapqIH4VR4A+721h65YzLvECJcggP0nbQeHtm8PrfP2WCEYVC6QwVoC1gWO2CiJUMdB2hzkP1v
-63XDgXQ3f/IybgPJYLcp7OSjwVczrJjKjpg7XNWra6WfrOqn2MBTl1EIUTq6f5PWwP8EyP/hNtnJ
-mopnI3sLIHbotRs5QPE=
+sduHEtTZEt5M9oi1yPGWpcmN1mX0R1ON0t4zCAD6HNdEeoIGKkFsggloAItCOZnhW0sDKQ/AThlK
+ywZ3bgqBfJPHjK++4gKJKPSTGXLfKrRH3NwrnBkjmM4hGbg2lya9pnLSx8XJM+FlsH5cut7nMiXk
+n/IE6V+PFOBn21MFtqI=
 </SignatureValue>
 <KeyInfo>
 <X509Data>

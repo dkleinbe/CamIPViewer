@@ -105,7 +105,10 @@ _gl_main_text_get(void *data, Evas_Object *obj, const char *part)
 	}
 	if (!strcmp(part, "elm.text.1") && _app_settings2[index].value)
 	{
-		return strdup(_app_settings2[index].value);
+		char buf[1024];
+		sprintf(buf,"<color=#FF0000FF>%s</color>", _app_settings2[index].value);
+		return strdup(buf);
+		//return strdup(_app_settings2[index].value);
 	}
 	return NULL;
 }
@@ -154,7 +157,7 @@ load_setting(int index)
 		{
 			free(_app_settings2[index].value);
 		}
-		_app_settings2[index].value = strdup(value);
+		_app_settings2[index].value = value;
 		return true;
 	}
 	else

@@ -1,5 +1,6 @@
 #include "camipviewer.h"
 #include "settings.h"
+#include "image.h"
 #include "utils.h"
 
 static char *main_menu_names[] = {
@@ -75,6 +76,7 @@ settings_cb(void *data, Evas_Object *obj, void *event_info)
 static void
 image_cb(void *data, Evas_Object *obj, void *event_info)
 {
+	create_image_view(data);
 }
 
 static void
