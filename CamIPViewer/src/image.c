@@ -130,6 +130,7 @@ create_image_view(appdata_s *ad)
 	elm_image_aspect_fixed_set(image_jpg, EINA_TRUE);
 	elm_image_fill_outside_set(image_jpg, EINA_FALSE);
 	elm_image_editable_set(image_jpg, EINA_TRUE);
+	elm_image_orient_set(image_jpg , ELM_IMAGE_ORIENT_90);
 	//elm_object_content_set(ad->conform, image_jpg);
 	/*
 	snprintf(buf, sizeof(buf), "%s/100_3.jpg", IMAGE_DIR);
