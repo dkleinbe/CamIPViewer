@@ -55,7 +55,7 @@
                                 								
                                 <option id="sbi.gnu.cpp.compiler.option.327627612" name="Tizen-Target" superClass="sbi.gnu.cpp.compiler.option" valueType="userObjs">
                                     									
-                                    <listOptionValue builtIn="false" value="wearable-5.0-emulator.core_llvm40.i386"/>
+                                    <listOptionValue builtIn="false" value="wearable-4.0-emulator.core_llvm40.i386"/>
                                     								
                                 </option>
                                 								
@@ -103,8 +103,6 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/device&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/device-certificate-manager&quot;"/>
-                                    									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/dlog&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/ecore-1&quot;"/>
@@ -129,6 +127,8 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/ector-1&quot;"/>
                                     									
+                                    <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/e_dbus-1&quot;"/>
+                                    									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/edje-1&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/eet-1&quot;"/>
@@ -144,6 +144,8 @@
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/eina-1/eina&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/eio-1&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/eldbus-1&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/elementary-1&quot;"/>
                                     									
@@ -189,8 +191,6 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/metadata-editor&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/minicontrol&quot;"/>
-                                    									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/minizip&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/network&quot;"/>
@@ -202,8 +202,6 @@
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/phonenumber-utils&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/privacy-privilege-manager/&quot;"/>
-                                    									
-                                    <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/rpc-port&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/SDL2&quot;"/>
                                     									
@@ -222,12 +220,6 @@
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/ui&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/vulkan&quot;"/>
-                                    									
-                                    <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/watchface-common&quot;"/>
-                                    									
-                                    <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/watchface-complication&quot;"/>
-                                    									
-                                    <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/watchface-complication-provider&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/widget_service&quot;"/>
                                     									
@@ -291,7 +283,7 @@
                                 								
                                 <option id="sbi.gnu.c.compiler.option.1400811102" name="Tizen-Target" superClass="sbi.gnu.c.compiler.option" valueType="userObjs">
                                     									
-                                    <listOptionValue builtIn="false" value="wearable-5.0-emulator.core_llvm40.i386"/>
+                                    <listOptionValue builtIn="false" value="wearable-4.0-emulator.core_llvm40.i386"/>
                                     								
                                 </option>
                                 								
@@ -339,8 +331,6 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/device&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/device-certificate-manager&quot;"/>
-                                    									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/dlog&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/ecore-1&quot;"/>
@@ -365,6 +355,8 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/ector-1&quot;"/>
                                     									
+                                    <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/e_dbus-1&quot;"/>
+                                    									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/edje-1&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/eet-1&quot;"/>
@@ -380,6 +372,8 @@
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/eina-1/eina&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/eio-1&quot;"/>
+                                    									
+                                    <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/eldbus-1&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/elementary-1&quot;"/>
                                     									
@@ -425,8 +419,6 @@
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/metadata-editor&quot;"/>
                                     									
-                                    <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/minicontrol&quot;"/>
-                                    									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/minizip&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/network&quot;"/>
@@ -438,8 +430,6 @@
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/phonenumber-utils&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/privacy-privilege-manager/&quot;"/>
-                                    									
-                                    <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/rpc-port&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/SDL2&quot;"/>
                                     									
@@ -458,12 +448,6 @@
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/ui&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/vulkan&quot;"/>
-                                    									
-                                    <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/watchface-common&quot;"/>
-                                    									
-                                    <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/watchface-complication&quot;"/>
-                                    									
-                                    <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/watchface-complication-provider&quot;"/>
                                     									
                                     <listOptionValue builtIn="false" value="&quot;${SBI_SYSROOT}/usr/include/widget_service&quot;"/>
                                     									
@@ -1234,5 +1218,7 @@
     </storageModule>
     	
     <storageModule moduleId="org.eclipse.cdt.internal.ui.text.commentOwnerProjectMappings"/>
+    	
+    <storageModule moduleId="org.eclipse.cdt.make.core.buildtargets"/>
     
 </cproject>

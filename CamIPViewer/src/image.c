@@ -59,24 +59,24 @@ app_init_curl()
 	    			dlog_print(DLOG_ERROR, LOG_TAG, "CONNECTION_TYPE_DISCONNECTED");
 	    			break;
 	    		case CONNECTION_TYPE_WIFI:
-	    			dlog_print(DLOG_ERROR, LOG_TAG, "CONNECTION_TYPE_WIFI");
+	    			dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_WIFI");
 	    			internet_available = true;
 	    			break;
 	    		case CONNECTION_TYPE_CELLULAR:
-					dlog_print(DLOG_ERROR, LOG_TAG, "CONNECTION_TYPE_CELLULAR");
+					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_CELLULAR");
 					break;
 	    		case CONNECTION_TYPE_ETHERNET:
-					dlog_print(DLOG_ERROR, LOG_TAG, "CONNECTION_TYPE_ETHERNET");
+					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_ETHERNET");
 					internet_available = true;
 					break;
 	    		case CONNECTION_TYPE_BT:
-					dlog_print(DLOG_ERROR, LOG_TAG, "CONNECTION_TYPE_BT");
+					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_BT");
 					break;
 	    		case CONNECTION_TYPE_NET_PROXY:
-					dlog_print(DLOG_ERROR, LOG_TAG, "CONNECTION_TYPE_NET_PROXY");
+					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_NET_PROXY");
 					break;
 	    		default:
-	    			dlog_print(DLOG_ERROR, LOG_TAG, "CONNECTION_TYPE_UNKNOWN");
+	    			dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_UNKNOWN");
 	    			break;
 			}
 	    	downloaded_image.image_size = 0;
@@ -114,7 +114,6 @@ void
 create_image_view(appdata_s *ad)
 {
 	Evas_Object *image_jpg;
-	char buf[256];
 
 	_app_naviframe = ad->naviframe;
 
@@ -123,7 +122,7 @@ create_image_view(appdata_s *ad)
 	image_jpg = elm_image_add(_app_naviframe);
 
 	elm_image_memfile_set(image_jpg, &downloaded_image.image_file_buf, downloaded_image.image_size, "jpg", NULL);
-	elm_object_part_content_set(_app_naviframe, "image_jpg", image_jpg);
+	//elm_object_part_content_set(_app_naviframe, "elm.swallow.content", image_jpg);
 	elm_image_no_scale_set(image_jpg, EINA_TRUE);
 	elm_image_resizable_set(image_jpg, EINA_FALSE, EINA_TRUE);
 	elm_image_smooth_set(image_jpg, EINA_FALSE);

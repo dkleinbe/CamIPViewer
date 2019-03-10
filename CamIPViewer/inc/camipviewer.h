@@ -10,7 +10,7 @@
 #ifdef  LOG_TAG
 #undef  LOG_TAG
 #endif
-#define LOG_TAG "camipviewer"
+#define LOG_TAG "0CAMPIPVIEWER"
 
 #if !defined(PACKAGE)
 #define PACKAGE "org.example.camipviewer"

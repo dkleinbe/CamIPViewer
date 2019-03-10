@@ -317,6 +317,8 @@ main(int argc, char *argv[])
 	ui_app_lifecycle_callback_s event_callback = {0,};
 	app_event_handler_h handlers[5] = {NULL, };
 
+	dlog_print(DLOG_INFO, LOG_TAG, "ENTERING main()");
+
 	event_callback.create = app_create;
 	event_callback.terminate = app_terminate;
 	event_callback.pause = app_pause;
