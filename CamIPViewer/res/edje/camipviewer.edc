@@ -1,3 +1,7 @@
+#define IMAGE_GAP 30.0
+#define IMAGE_WIDTH 170.0
+#define IMAGE_HEIGHT 170.0
+
 collections {
    group { name: "main";
       parts {
@@ -11,106 +15,124 @@ collections {
          }
       }
    }
-	group { name: "entry_layout";
-		parts {
-			part { name: "txt_title";
-		           type: TEXT;
-		           mouse_events: 0;
-		           description { state: "default" 0.0;
-		              text { text: "Hello Tizen"; font: "Tizen:style=regular"; size: 20; min: 1 1; align: 0.5 0; ellipsis: -1; }
-		              color: 0 255 255 255;
-		           }
-		    }
-		}
-	   parts {
-	      part { name: "bg";
-	         type: RECT;
-	         scale: 1;
-	         description { state: "default" 0.0;
-	            color: 0 0 0 0;
-	         }
-	      }
-	      part { name: "top_padding";
-	         type: RECT;
-	         scale: 1;
-	         description { state: "default" 0.0;
-	            min: 0 60;
-	            align: 0.5 0.0;
-	            fixed: 0 1;
-	            rel1 {
-	               relative: 0 0;
-	               to: "bg";
-	            }
-	            rel2 {
-	               relative: 1 0;
-	               to: "bg";
-	            }
-	            color: 255 0 0 100;
-	         }
-	      }
-	      part { name: "left_padding";
-	         type: RECT;
-	         scale: 1;
-	         description { state: "default" 0.0;
-	            rel1 {
-	               relative: 0 0;
-	               to: "bg";
-	            }
-	            rel2 {
-	               relative: 0.2 1;
-	               to: "bg";
-	            }
-	            color: 0 100 0 255;
-	         }
-	      }
-	      part { name: "right_padding";
-	         type: RECT;
-	         scale: 1;
-	         description { state: "default" 0.0;
-	            rel1 {
-	               relative: 0.8 0;
-	               to: "bg";
-	            }
-	            rel2 {
-	               to: "bg";
-	            }
-	            color: 0 0 255 255;
-	         }
-	      }
-	      part { name: "bg_entry";
-	         type: RECT;
-	         mouse_events: 0;
-	         scale:1;
-	         description { state: "default" 0.0;
-	            min: 0 39;
-	            max: -1 39;
-	            fixed: 1 1;
-	            rel1 {
-	               relative: 0.0 1.0;
-	               to_y: "top_padding";
-	            }
-	            color: 100 0 100 100;
-	            align: 0 0;
-	         }
-	      }
-	      part { name: "entry_part";
-	         type: SWALLOW;
-	         scale: 1;
-	         description { state: "default" 0.0;
-	            rel1 {
-	               relative: 1.0 0.0;
-	               to_x: "left_padding";
-	               to_y: "bg_entry";
-	            }
-	            rel2 {
-	               relative: 0.0 0.0;
-	               to_x: "right_padding";
-	               to_y: "bg_entry";
-	            }
-	            align: 0 0;
-	         }
-	      }
-	   }
-	}
-  
+   group { name: "image_layout";
+      parts {
+         part { 
+            name: "image1";
+            type: SWALLOW;
+            scale: 1;
+            desc { "default";
+               visible: 1;
+               //aspect: 1 1;
+               align: 0.5 0.5;
+               fixed: 1 1;
+               min: 300 261;
+               rel1.relative: 0.5000 0.5650;
+               rel2.relative: 0.5000 0.5650;
+            }
+         }
+      }
+   }
+   group { name: "entry_layout";
+      parts {
+         part { name: "txt_title";
+            type: TEXT;
+            mouse_events: 0;
+            description { state: "default" 0.0;
+               text { text: "Hello Tizen"; font: "Tizen:style=regular"; size: 20; min: 1 1; align: 0.5 0; ellipsis: -1; }
+               color: 0 255 255 255;
+            }
+         }
+      }
+      parts {
+         part { name: "bg";
+            type: RECT;
+            scale: 1;
+            description { state: "default" 0.0;
+               color: 0 0 0 0;
+            }
+         }
+         part { name: "top_padding";
+            type: RECT;
+            scale: 1;
+            description { state: "default" 0.0;
+               min: 0 60;
+               align: 0.5 0.0;
+               fixed: 0 1;
+               rel1 {
+                  relative: 0 0;
+                  to: "bg";
+               }
+               rel2 {
+                  relative: 1 0;
+                  to: "bg";
+               }
+               color: 255 0 0 100;
+            }
+         }
+         part { name: "left_padding";
+            type: RECT;
+            scale: 1;
+            description { state: "default" 0.0;
+               rel1 {
+                  relative: 0 0;
+                  to: "bg";
+               }
+               rel2 {
+                  relative: 0.2 1;
+                  to: "bg";
+               }
+               color: 0 100 0 255;
+            }
+         }
+         part { name: "right_padding";
+            type: RECT;
+            scale: 1;
+            description { state: "default" 0.0;
+               rel1 {
+                  relative: 0.8 0;
+                  to: "bg";
+               }
+               rel2 {
+                  to: "bg";
+               }
+               color: 0 0 255 255;
+            }
+         }
+         part { name: "bg_entry";
+            type: RECT;
+            mouse_events: 0;
+            scale:1;
+            description { state: "default" 0.0;
+               min: 0 39;
+               max: -1 39;
+               fixed: 1 1;
+               rel1 {
+                  relative: 0.0 1.0;
+                  to_y: "top_padding";
+               }
+               color: 100 0 100 100;
+               align: 0 0;
+            }
+         }
+         part { name: "entry_part";
+            type: SWALLOW;
+            scale: 1;
+            description { state: "default" 0.0;
+               rel1 {
+                  relative: 1.0 0.0;
+                  to_x: "left_padding";
+                  to_y: "bg_entry";
+               }
+               rel2 {
+                  relative: 0.0 0.0;
+                  to_x: "right_padding";
+                  to_y: "bg_entry";
+               }
+               align: 0 0;
+            }
+         }
+      }
+   }
+
 }

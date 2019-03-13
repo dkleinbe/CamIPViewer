@@ -141,7 +141,6 @@ create_list_view(appdata_s *ad)
 	id = calloc(sizeof(item_data), 1);
 	id->index = index++;
 	id->item = elm_genlist_item_append(genlist, itc, id, NULL, ELM_GENLIST_ITEM_NONE, video_cb, ad);
-	id = calloc(sizeof(item_data), 1);
 
 	elm_genlist_item_append(genlist, ptc, NULL, NULL, ELM_GENLIST_ITEM_NONE, NULL, NULL);
 
@@ -208,6 +207,7 @@ create_base_gui(appdata_s *ad)
 	evas_object_size_hint_weight_set(ad->layout, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 	elm_layout_theme_set(ad->layout, "layout", "application", "default");
 	//eext_object_event_callback_add(ad->layout, EEXT_CALLBACK_BACK, layout_back_cb, ad);
+	evas_object_show(ad->layout);
 	elm_object_content_set(ad->conform, ad->layout);
 
 	/* Naviframe */
@@ -317,7 +317,7 @@ main(int argc, char *argv[])
 	ui_app_lifecycle_callback_s event_callback = {0,};
 	app_event_handler_h handlers[5] = {NULL, };
 
-	dlog_print(DLOG_INFO, LOG_TAG, "ENTERING main()");
+	dlog_print(DLOG_INFO, LOG_TAG, "ENTERING main() PID: <%d>", getpid());
 
 	event_callback.create = app_create;
 	event_callback.terminate = app_terminate;

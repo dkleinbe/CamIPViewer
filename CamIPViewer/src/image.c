@@ -7,6 +7,7 @@
 
 #include <net_connection.h>
 #include <curl/curl.h>
+#include "utils.h"
 #include "image.h"
 #include "settings.h"
 
@@ -114,33 +115,49 @@ void
 create_image_view(appdata_s *ad)
 {
 	Evas_Object *image_jpg;
+	Evas_Object *scroller;
+	Evas_Object *circle_scroller;
+	Evas_Object *layout;
+	char edj_path[PATH_MAX] = {0, };
+	char buf[256];
+	int ret = 0;
 
 	_app_naviframe = ad->naviframe;
 
 	app_init_curl();
 
-	image_jpg = elm_image_add(_app_naviframe);
+	scroller = elm_scroller_add(_app_naviframe);
+	elm_scroller_bounce_set(scroller, EINA_FALSE, EINA_TRUE);
+	elm_scroller_policy_set(scroller, ELM_SCROLLER_POLICY_AUTO, ELM_SCROLLER_POLICY_AUTO);
+	evas_object_show(scroller);
+
+	circle_scroller = eext_circle_object_scroller_add(scroller, ad->circle_surface);
+	eext_circle_object_scroller_policy_set(circle_scroller, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_AUTO);
+	eext_rotary_object_event_activated_set(circle_scroller, EINA_TRUE);
+
+/*
+	app_get_resource(EDJ_FILE, edj_path, (int)PATH_MAX);
+
+	layout = elm_layout_add(scroller);
+	ret = elm_layout_file_set(layout, edj_path, "image_layout");
+	evas_object_size_hint_weight_set(layout, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+
+
+
+	elm_object_part_content_set(layout, "image1", image_jpg);
+*/
+	image_jpg = elm_image_add(scroller);
 
 	elm_image_memfile_set(image_jpg, &downloaded_image.image_file_buf, downloaded_image.image_size, "jpg", NULL);
-	//elm_object_part_content_set(_app_naviframe, "elm.swallow.content", image_jpg);
+	elm_object_content_set(scroller, image_jpg);
+
 	elm_image_no_scale_set(image_jpg, EINA_TRUE);
-	elm_image_resizable_set(image_jpg, EINA_FALSE, EINA_TRUE);
+	elm_image_resizable_set(image_jpg, EINA_FALSE, EINA_FALSE);
 	elm_image_smooth_set(image_jpg, EINA_FALSE);
 	elm_image_aspect_fixed_set(image_jpg, EINA_TRUE);
 	elm_image_fill_outside_set(image_jpg, EINA_FALSE);
 	elm_image_editable_set(image_jpg, EINA_TRUE);
 	elm_image_orient_set(image_jpg , ELM_IMAGE_ORIENT_90);
-	//elm_object_content_set(ad->conform, image_jpg);
-	/*
-	snprintf(buf, sizeof(buf), "%s/100_3.jpg", IMAGE_DIR);
-	elm_image_file_set(image_jpg, buf, NULL);
-	elm_object_part_content_set(_app_naviframe, "image_jpg", image_jpg);
-	elm_image_no_scale_set(image_jpg, EINA_TRUE);
-	elm_image_resizable_set(image_jpg, EINA_FALSE, EINA_FALSE);
-	elm_image_smooth_set(image_jpg, EINA_FALSE);
-	elm_image_aspect_fixed_set(image_jpg, EINA_TRUE);
-	elm_image_fill_outside_set(image_jpg, EINA_TRUE);
-	elm_image_editable_set(image_jpg, EINA_TRUE);
-*/
-	elm_naviframe_item_push(_app_naviframe, NULL, NULL, NULL, image_jpg, "empty");
+
+	elm_naviframe_item_push(_app_naviframe, "Image", NULL, NULL, scroller, "empty");
 }
