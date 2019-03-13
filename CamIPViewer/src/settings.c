@@ -182,7 +182,7 @@ _naviframe_pop_cb(void *data, Elm_Object_Item *it)
 	Evas_Object *genlist = (Evas_Object *)data;
 
 	//evas_object_hide(genlist);
-	elm_naviframe_item_pop(genlist);
+	//elm_naviframe_item_pop(genlist);
 	return EINA_TRUE;
 }
 /*
