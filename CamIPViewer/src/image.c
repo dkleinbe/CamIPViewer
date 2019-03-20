@@ -124,7 +124,11 @@ create_image_view(appdata_s *ad)
 
 	_app_naviframe = ad->naviframe;
 
+//#define MY_TEST
+#ifndef MY_TEST
 	app_init_curl();
+#endif
+
 
 	scroller = elm_scroller_add(_app_naviframe);
 	elm_scroller_bounce_set(scroller, EINA_FALSE, EINA_TRUE);
@@ -132,24 +136,37 @@ create_image_view(appdata_s *ad)
 	evas_object_show(scroller);
 
 	circle_scroller = eext_circle_object_scroller_add(scroller, ad->circle_surface);
-	eext_circle_object_scroller_policy_set(circle_scroller, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_AUTO);
+	eext_circle_object_scroller_policy_set(circle_scroller, ELM_SCROLLER_POLICY_AUTO, ELM_SCROLLER_POLICY_AUTO);
 	eext_rotary_object_event_activated_set(circle_scroller, EINA_TRUE);
 
-/*
+#define MY_LAYOUT
+#ifdef MY_LAYOUT
 	app_get_resource(EDJ_FILE, edj_path, (int)PATH_MAX);
 
 	layout = elm_layout_add(scroller);
 	ret = elm_layout_file_set(layout, edj_path, "image_layout");
 	evas_object_size_hint_weight_set(layout, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 
+	image_jpg = elm_image_add(layout);
 
 
-	elm_object_part_content_set(layout, "image1", image_jpg);
-*/
+#else
 	image_jpg = elm_image_add(scroller);
 
+#endif /* MY_LAYOUT */
+
+#ifdef MY_TEST
+	snprintf(buf, sizeof(buf), "%s/100_3.jpg",IMAGE_DIR);
+	elm_image_file_set(image_jpg, buf, NULL);
+#else
 	elm_image_memfile_set(image_jpg, &downloaded_image.image_file_buf, downloaded_image.image_size, "jpg", NULL);
+#endif /* MY_TEST */
+
+#ifdef MY_LAYOUT
+	elm_object_part_content_set(layout, "image1", image_jpg);
+#else
 	elm_object_content_set(scroller, image_jpg);
+#endif /* MY_LAYOUT */
 
 	elm_image_no_scale_set(image_jpg, EINA_TRUE);
 	elm_image_resizable_set(image_jpg, EINA_FALSE, EINA_FALSE);
@@ -158,6 +175,8 @@ create_image_view(appdata_s *ad)
 	elm_image_fill_outside_set(image_jpg, EINA_FALSE);
 	elm_image_editable_set(image_jpg, EINA_TRUE);
 	elm_image_orient_set(image_jpg , ELM_IMAGE_ORIENT_90);
+
+	elm_object_content_set(scroller, layout);
 
 	elm_naviframe_item_push(_app_naviframe, "Image", NULL, NULL, scroller, "empty");
 }

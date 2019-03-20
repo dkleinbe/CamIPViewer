@@ -195,6 +195,7 @@ create_base_gui(appdata_s *ad)
 	elm_win_resize_object_add(ad->win, ad->conform);
 	evas_object_show(ad->conform);
 
+#ifdef AAA
 	// Eext Circle Surface Creation
 	ad->circle_surface = eext_circle_surface_conformant_add(ad->conform);
 
@@ -212,6 +213,15 @@ create_base_gui(appdata_s *ad)
 
 	/* Naviframe */
 	ad->naviframe = elm_naviframe_add(ad->layout);
+#endif
+
+	/* Naviframe */
+	ad->naviframe = elm_naviframe_add(ad->conform);
+	elm_object_content_set(ad->conform, ad->naviframe);
+
+	/* Eext Circle Surface*/
+	ad->circle_surface = eext_circle_surface_naviframe_add(ad->naviframe);
+
 	/* Create main menu list */
 	create_list_view(ad);
 
