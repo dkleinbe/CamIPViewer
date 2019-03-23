@@ -137,20 +137,21 @@ create_image_view(appdata_s *ad)
 	elm_scroller_bounce_set(scroller, EINA_TRUE, EINA_TRUE);
 	elm_scroller_policy_set(scroller, ELM_SCROLLER_POLICY_AUTO, ELM_SCROLLER_POLICY_AUTO);
 	evas_object_show(scroller);
-
+/*
 	circle_scroller = eext_circle_object_scroller_add(scroller, ad->circle_surface);
 	eext_circle_object_scroller_policy_set(circle_scroller, ELM_SCROLLER_POLICY_ON, ELM_SCROLLER_POLICY_ON);
 	eext_rotary_object_event_activated_set(circle_scroller, EINA_TRUE);
-
+*/
 #define MY_LAYOUT
 #ifdef MY_LAYOUT
 	app_get_resource(EDJ_FILE, edj_path, (int)PATH_MAX);
 
 	layout = elm_layout_add(scroller);
 	ret = elm_layout_file_set(layout, edj_path, "image_layout");
-	//evas_object_size_hint_weight_set(layout, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
+	evas_object_size_hint_weight_set(layout, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 
 	image_jpg = elm_image_add(layout);
+
 
 
 #else
@@ -178,15 +179,19 @@ create_image_view(appdata_s *ad)
 	elm_image_fill_outside_set(image_jpg, EINA_FALSE);
 	elm_image_editable_set(image_jpg, EINA_TRUE);
 	elm_image_orient_set(image_jpg , ELM_IMAGE_ORIENT_90);
-/*
+
 	evas_image = elm_image_object_get(image_jpg);
 	evas_object_image_size_get(evas_image, &w, &h);
+#ifndef MY_LAYOUT
+	evas_object_size_hint_min_set(image_jpg, w, h);
+	evas_object_size_hint_max_set(image_jpg, w, h);
+
+#else MY_LAYOUT
 	evas_object_size_hint_min_set(layout, w, h);
 	evas_object_size_hint_max_set(layout, w, h);
 	evas_object_size_hint_min_set(image_jpg, w, h);
 	evas_object_size_hint_max_set(image_jpg, w, h);
-*/
-#ifdef MY_LAYOUT
+
 	elm_object_content_set(scroller, layout);
 #endif
 

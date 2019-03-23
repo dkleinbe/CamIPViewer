@@ -225,7 +225,6 @@ create_base_gui(appdata_s *ad)
 	/* Create main menu list */
 	create_list_view(ad);
 
-	elm_object_part_content_set(ad->layout, "elm.swallow.content", ad->naviframe);
 	eext_object_event_callback_add(ad->naviframe, EEXT_CALLBACK_BACK, eext_naviframe_back_cb, NULL);
 	eext_object_event_callback_add(ad->naviframe, EEXT_CALLBACK_MORE, eext_naviframe_more_cb, NULL);
 
