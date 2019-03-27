@@ -58,7 +58,7 @@ win_delete_request_cb(void *data, Evas_Object *obj, void *event_info)
 {
 	ui_app_exit();
 }
-
+#ifdef AZE
 static void
 layout_back_cb(void *data, Evas_Object *obj, void *event_info)
 {
@@ -66,7 +66,7 @@ layout_back_cb(void *data, Evas_Object *obj, void *event_info)
 	/* Let window go to hide state. */
 	elm_win_lower(ad->win);
 }
-
+#endif /* AZE */
 static void
 settings_cb(void *data, Evas_Object *obj, void *event_info)
 {
@@ -162,7 +162,7 @@ create_list_view(appdata_s *ad)
 static void
 create_base_gui(appdata_s *ad)
 {
-	char edj_path[PATH_MAX] = {0, };
+	//char edj_path[PATH_MAX] = {0, };
 	/*
 	 * - win
 	 *   - conformant
@@ -217,6 +217,7 @@ create_base_gui(appdata_s *ad)
 
 	/* Naviframe */
 	ad->naviframe = elm_naviframe_add(ad->conform);
+	evas_object_show(ad->naviframe);
 	elm_object_content_set(ad->conform, ad->naviframe);
 
 	/* Eext Circle Surface*/
@@ -224,6 +225,7 @@ create_base_gui(appdata_s *ad)
 
 	/* Create main menu list */
 	create_list_view(ad);
+	//create_image_view(ad);
 
 	eext_object_event_callback_add(ad->naviframe, EEXT_CALLBACK_BACK, eext_naviframe_back_cb, NULL);
 	eext_object_event_callback_add(ad->naviframe, EEXT_CALLBACK_MORE, eext_naviframe_more_cb, NULL);

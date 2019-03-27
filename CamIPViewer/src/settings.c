@@ -179,7 +179,7 @@ _entry_setting_enter_click(void *data, Evas_Object *obj, void *event_info)
 static Eina_Bool
 _naviframe_pop_cb(void *data, Elm_Object_Item *it)
 {
-	Evas_Object *genlist = (Evas_Object *)data;
+	//Evas_Object *genlist = (Evas_Object *)data;
 
 	//evas_object_hide(genlist);
 	//elm_naviframe_item_pop(genlist);
@@ -325,9 +325,6 @@ create_settings_list_view(appdata_s *ad)
 const char *
 get_setting(int index)
 {
-	bool is_existing = false;
-	char *value;
-
 
 	if (_app_settings2[index].value != NULL)
 	{
