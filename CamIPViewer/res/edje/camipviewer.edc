@@ -24,9 +24,9 @@ collections {
             desc { "default";
                visible: 1;
                //aspect: 1 1;
-               align: 0.5 0.5;
+               //align: 0.5 0.5;
                //fixed: 1 1;
-               min: 300 300;
+               //min: 360 360;
                rel1.relative: 0.5000 0.5000;
                rel2.relative: 0.5000 0.5000;
             }
