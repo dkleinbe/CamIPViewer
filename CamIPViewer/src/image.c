@@ -17,6 +17,11 @@
 #define BUF_SIZE IMAGE_WIDTH * IMAGE_HEIGHT * 4
 
 static Evas_Object *_app_naviframe;
+/* FIXME: move to a structure */
+static Evas_Object *scroller;
+static Evas_Object *layout;
+static int screen_size_w = 0;
+static int screen_size_h = 0;
 
 #define MY_TEST
 #ifndef MY_TEST
@@ -120,22 +125,62 @@ app_init_curl()
 static void
 _image_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EINA_UNUSED)
 {
+	static int zoom_fator = 1;
 	Evas_Object *image = data;
-	Elm_Image_Orient orient;
-	int w,h;
+	int xi;
+	int yi;
+	int x;
+	int y;
+	int w;
+	int h;
+	int shift_x;
+	int shift_y;
+	int current_w = 0;
+	int current_h = 0;
 
-	orient = elm_image_orient_get(image);
 
-	if (orient >= 7)
-		orient = 0;
-	else
-		orient++;
+	//elm_image_orient_set(image , orient);
+	evas_object_size_hint_min_get(image, &current_w, &current_h);
+	elm_scroller_region_get(scroller, &x, &y, &w, &h);
+
+	shift_x = (current_w - x) / 2;
+	shift_y = (current_h - y) / 2;
 
 	elm_image_object_size_get(image , &w, &h);
-	dlog_print(DLOG_INFO, LOG_TAG, "image clicked! orient = %d , width = %d , height = %d\n", orient, w, h);
-	//elm_image_orient_set(image , orient);
-	evas_object_size_hint_min_set(image, w/2, h/2);
-	evas_object_size_hint_max_set(image, w/2, h/2);
+	dlog_print(DLOG_INFO, LOG_TAG, "image clicked!, width = %d , height = %d\n", w, h);
+
+	if (current_w >= w || current_h >= h)
+	{
+		zoom_fator = 1;
+	}
+	else
+	{
+		zoom_fator = 2;
+	}
+	current_w *= zoom_fator;
+	current_h *= zoom_fator;
+
+	evas_object_size_hint_min_set(layout, w, h);
+	evas_object_size_hint_max_set(layout, w, h);
+
+	evas_object_size_hint_min_set(image, current_w, current_h);
+	evas_object_size_hint_max_set(image, current_w, current_h);
+
+	xi = x + screen_size_w / 2;
+	yi = y + screen_size_h / 2;
+	x = xi * zoom_fator - screen_size_w / 2;
+	y = yi * zoom_fator - screen_size_h / 2;
+
+
+	//cx = x + w/2;
+	//cy = y + h/2;
+	/* center image */
+	//x= (current_w - screen_size_w) / 2 >= 0 ? (current_w - screen_size_w) / 2 : 0;
+	//y =(current_h - screen_size_h) / 2 >= 0 ? (current_h - screen_size_h) / 2 : 0;
+	w = (current_w > screen_size_w) ? screen_size_w : w;
+	h = (current_h > screen_size_h) ? screen_size_h : h;
+	elm_scroller_region_show(scroller, x, y, w, h);
+
 	evas_object_show(image);
 }
 
@@ -147,9 +192,8 @@ void
 create_image_view(appdata_s *ad)
 {
 	Evas_Object *image_jpg;
-	Evas_Object *scroller;
 	//Evas_Object *circle_scroller;
-	Evas_Object *layout;
+
 	char edj_path[PATH_MAX] = {0, };
 	char buf[256];
 	int ret = 0;
@@ -157,8 +201,6 @@ create_image_view(appdata_s *ad)
 	int y = -1;
 	int w = 0;
 	int h = 0;
-	int screen_size_w = 0;
-	int screen_size_h = 0;
 
 	_app_naviframe = ad->naviframe;
 
@@ -231,8 +273,8 @@ create_image_view(appdata_s *ad)
 	evas_object_size_hint_min_set(layout, w, h);
 	evas_object_size_hint_max_set(layout, w, h);
 #endif /* MY_LAYOUT */
-	evas_object_size_hint_min_set(image_jpg, w, h);
-	evas_object_size_hint_max_set(image_jpg, w, h);
+	evas_object_size_hint_min_set(image_jpg, screen_size_w, screen_size_h);
+	evas_object_size_hint_max_set(image_jpg, screen_size_w, screen_size_h);
 
 	/* center image */
 	x= (w - screen_size_w) / 2 >= 0 ? (w - screen_size_w) / 2 : 0;
