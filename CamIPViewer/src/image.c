@@ -133,19 +133,19 @@ _image_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EIN
 	int y;
 	int w;
 	int h;
-	int shift_x;
-	int shift_y;
 	int current_w = 0;
 	int current_h = 0;
 
 
 	//elm_image_orient_set(image , orient);
+
+	// get displayed image size
 	evas_object_size_hint_min_get(image, &current_w, &current_h);
+	// get visible region
 	elm_scroller_region_get(scroller, &x, &y, &w, &h);
 
-	shift_x = (current_w - x) / 2;
-	shift_y = (current_h - y) / 2;
-
+	// get image true size
+	// FIXME: store this value somewhere do not get it every time
 	elm_image_object_size_get(image , &w, &h);
 	dlog_print(DLOG_INFO, LOG_TAG, "image clicked!, width = %d , height = %d\n", w, h);
 
@@ -157,28 +157,25 @@ _image_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EIN
 	{
 		zoom_fator = 2;
 	}
+
+	// compute new image size
 	current_w *= zoom_fator;
 	current_h *= zoom_fator;
-
-	evas_object_size_hint_min_set(layout, w, h);
-	evas_object_size_hint_max_set(layout, w, h);
-
+	// set new image size
 	evas_object_size_hint_min_set(image, current_w, current_h);
 	evas_object_size_hint_max_set(image, current_w, current_h);
 
+	// compute image center
 	xi = x + screen_size_w / 2;
 	yi = y + screen_size_h / 2;
+	// compute new up left corner in zoomed image
 	x = xi * zoom_fator - screen_size_w / 2;
 	y = yi * zoom_fator - screen_size_h / 2;
 
-
-	//cx = x + w/2;
-	//cy = y + h/2;
-	/* center image */
-	//x= (current_w - screen_size_w) / 2 >= 0 ? (current_w - screen_size_w) / 2 : 0;
-	//y =(current_h - screen_size_h) / 2 >= 0 ? (current_h - screen_size_h) / 2 : 0;
+	// if image size small than screen size keep image size for scroll region
 	w = (current_w > screen_size_w) ? screen_size_w : w;
 	h = (current_h > screen_size_h) ? screen_size_h : h;
+	// set scroll region
 	elm_scroller_region_show(scroller, x, y, w, h);
 
 	evas_object_show(image);
