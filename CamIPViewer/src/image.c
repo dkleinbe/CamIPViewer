@@ -122,15 +122,17 @@ app_init_curl()
 }
 #endif /* MY_TEST */
 
-static void
-_image_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EINA_UNUSED)
+static Eina_Bool
+_rotary_handler_cb(void *data, Eext_Rotary_Event_Info *ev)
 {
-	static int zoom_fator = 1;
+	float zoom_fator = 1.0;
 	Evas_Object *image = data;
 	int xi;
 	int yi;
 	int x;
 	int y;
+	int image_w;
+	int image_h;
 	int w;
 	int h;
 	int current_w = 0;
@@ -146,21 +148,37 @@ _image_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EIN
 
 	// get image true size
 	// FIXME: store this value somewhere do not get it every time
-	elm_image_object_size_get(image , &w, &h);
+	elm_image_object_size_get(image , &image_w, &image_h);
 	dlog_print(DLOG_INFO, LOG_TAG, "image clicked!, width = %d , height = %d\n", w, h);
 
-	if (current_w >= w || current_h >= h)
-	{
-		zoom_fator = 1;
-	}
-	else
-	{
-		zoom_fator = 2;
-	}
-
+    if (ev->direction == EEXT_ROTARY_DIRECTION_CLOCKWISE)
+    {
+        dlog_print(DLOG_DEBUG, LOG_TAG,
+                   "Rotary device rotated in clockwise direction");
+    	// If all ready over zoomed return
+    	if (current_w >= image_w || current_h >= image_h)
+    	{
+    		return EINA_FALSE;
+    	}
+        zoom_fator = 2;
+    }
+    else
+    {
+        dlog_print(DLOG_DEBUG, LOG_TAG,
+                   "Rotary device rotated in counter-clockwise direction");
+    	// if image smaller then scroller region return
+    	if (current_w < w || current_h < h)
+    	{
+    		return EINA_FALSE;
+    	}
+        zoom_fator = 1.0/2.0;
+    }
 	// compute new image size
 	current_w *= zoom_fator;
 	current_h *= zoom_fator;
+	// set layout size to image size
+	evas_object_size_hint_min_set(layout, current_w, current_h);
+	evas_object_size_hint_max_set(layout, current_w, current_h);
 	// set new image size
 	evas_object_size_hint_min_set(image, current_w, current_h);
 	evas_object_size_hint_max_set(image, current_w, current_h);
@@ -179,6 +197,15 @@ _image_clicked_cb(void *data, Evas_Object *obj EINA_UNUSED, void *event_info EIN
 	elm_scroller_region_show(scroller, x, y, w, h);
 
 	evas_object_show(image);
+
+	return EINA_FALSE;
+}
+
+static Eina_Bool
+_image_pop_cb(void *data, Elm_Object_Item *it)
+{
+	eext_rotary_event_handler_del(_rotary_handler_cb);
+	return EINA_TRUE;
 }
 
 /*
@@ -190,7 +217,7 @@ create_image_view(appdata_s *ad)
 {
 	Evas_Object *image_jpg;
 	//Evas_Object *circle_scroller;
-
+	Elm_Object_Item *nf_image;
 	char edj_path[PATH_MAX] = {0, };
 	char buf[256];
 	int ret = 0;
@@ -286,7 +313,9 @@ create_image_view(appdata_s *ad)
 
 	elm_scroller_region_show(scroller, x, y, w, h);
 
-	evas_object_smart_callback_add(image_jpg, "clicked", _image_clicked_cb , image_jpg);
+	//evas_object_smart_callback_add(image_jpg, "clicked", _image_clicked_cb , image_jpg);
+	eext_rotary_event_handler_add(_rotary_handler_cb, image_jpg);
 
-	elm_naviframe_item_push(_app_naviframe, NULL, NULL, NULL, scroller, "empty");
+	nf_image = elm_naviframe_item_push(_app_naviframe, NULL, NULL, NULL, scroller, "empty");
+	elm_naviframe_item_pop_cb_set(nf_image, _image_pop_cb, NULL);
 }
