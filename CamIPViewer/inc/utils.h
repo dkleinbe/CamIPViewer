@@ -14,6 +14,7 @@
 extern "C" {
 #endif
 	void app_get_resource(const char *edj_file_in, char *edj_path_out, int edj_path_max);
+	void popup_text_1button(void *data, Evas_Object *obj, void *event_info);
 #ifdef __cplusplus
 }
 #endif

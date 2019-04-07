@@ -55,9 +55,11 @@ app_init_curl()
 	bool internet_available = false;
 	connection_h connection;
 	connection_type_e type;
+	char *proxy_address;
 	char url[1024];
 
 	int ret = 0;
+	int conn_err = -1;
 
 	curl = curl_easy_init();
 
@@ -86,6 +88,13 @@ app_init_curl()
 					break;
 	    		case CONNECTION_TYPE_BT:
 					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_BT");
+
+					conn_err = connection_get_proxy(connection, CONNECTION_ADDRESS_FAMILY_IPV4, &proxy_address);
+					if (conn_err == CONNECTION_ERROR_NONE && proxy_address)
+					{
+						curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address);
+					}
+
 					break;
 	    		case CONNECTION_TYPE_NET_PROXY:
 					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_NET_PROXY");
@@ -232,8 +241,12 @@ create_image_view(appdata_s *ad)
 	system_info_get_platform_int("tizen.org/feature/screen.height", &screen_size_h);
 
 #ifndef MY_TEST
-	app_init_curl();
+	if (! app_init_curl())
+	{
+		return;
+	}
 #endif
+	popup_text_1button(ad, NULL, NULL);
 
 	scroller = elm_scroller_add(_app_naviframe);
 
