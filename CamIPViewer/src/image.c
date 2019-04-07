@@ -18,12 +18,13 @@
 
 static Evas_Object *_app_naviframe;
 /* FIXME: move to a structure */
+static appdata_s *_appdata;
 static Evas_Object *scroller;
 static Evas_Object *layout;
 static int screen_size_w = 0;
 static int screen_size_h = 0;
 
-#define MY_TEST
+//#define MY_TEST
 #ifndef MY_TEST
 
 typedef struct image_data {
@@ -74,39 +75,52 @@ app_init_curl()
 			{
 	    		case CONNECTION_TYPE_DISCONNECTED:
 	    			dlog_print(DLOG_ERROR, LOG_TAG, "CONNECTION_TYPE_DISCONNECTED");
+	    			popup_text_1button(_appdata, "CONNECTION_TYPE_DISCONNECTED");
 	    			break;
 	    		case CONNECTION_TYPE_WIFI:
 	    			dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_WIFI");
+	    			popup_text_1button(_appdata, "CONNECTION_TYPE_WIFI");
 	    			internet_available = true;
 	    			break;
 	    		case CONNECTION_TYPE_CELLULAR:
 					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_CELLULAR");
+					popup_text_1button(_appdata, "CONNECTION_TYPE_CELLULAR");
 					break;
 	    		case CONNECTION_TYPE_ETHERNET:
 					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_ETHERNET");
+					popup_text_1button(_appdata, "CONNECTION_TYPE_ETHERNET");
 					internet_available = true;
 					break;
 	    		case CONNECTION_TYPE_BT:
 					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_BT");
-
-					conn_err = connection_get_proxy(connection, CONNECTION_ADDRESS_FAMILY_IPV4, &proxy_address);
-					if (conn_err == CONNECTION_ERROR_NONE && proxy_address)
-					{
-						curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address);
-					}
+					popup_text_1button(_appdata, "CONNECTION_TYPE_BT");
 
 					break;
 	    		case CONNECTION_TYPE_NET_PROXY:
 					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_NET_PROXY");
+					popup_text_1button(_appdata, "CONNECTION_TYPE_NET_PROXY");
+
 					break;
 	    		default:
 	    			dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_UNKNOWN");
+	    			popup_text_1button(_appdata, "CONNECTION_TYPE_UNKNOWN");
 	    			break;
 			}
 	    	downloaded_image.image_size = 0;
-	    	//curl_easy_setopt(curl, CURLOPT_URL, "http://192.168.1.22:8080/shot.jpg");
-	    	snprintf(url, 1023, "http://%s:%s/shot.jpg", get_setting(CAM_IP), get_setting(CAM_PORT));
 
+	    	// set URL to fetch
+	    	snprintf(url, 1023, "http://%s:%s/shot.jpg", get_setting(CAM_IP), get_setting(CAM_PORT));
+	    	// get proxy settings
+			conn_err = connection_get_proxy(connection, CONNECTION_ADDRESS_FAMILY_IPV4, &proxy_address);
+			if (conn_err == CONNECTION_ERROR_NONE && proxy_address)
+			{
+				curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address);
+				internet_available = true;
+			}
+			else
+			{
+				popup_text_1button(_appdata, "connection_get_proxy error");
+			}
 	    	curl_easy_setopt(curl, CURLOPT_URL, url);
 	    	curl_easy_setopt(curl, CURLOPT_USERNAME, get_setting(CAM_USER));
 	    	curl_easy_setopt(curl, CURLOPT_PASSWORD, get_setting(CAM_PASSWORD));
@@ -120,7 +134,7 @@ app_init_curl()
 		    curl_easy_cleanup(curl);
 		    connection_unset_proxy_address_changed_cb(connection);
 		    connection_destroy(connection);
-
+		    return true;
 	    }
 	}
 	else {
@@ -235,6 +249,7 @@ create_image_view(appdata_s *ad)
 	int w = 0;
 	int h = 0;
 
+	_appdata = ad;
 	_app_naviframe = ad->naviframe;
 
 	system_info_get_platform_int("tizen.org/feature/screen.width", &screen_size_w);
@@ -246,7 +261,7 @@ create_image_view(appdata_s *ad)
 		return;
 	}
 #endif
-	popup_text_1button(ad, NULL, NULL);
+	popup_text_1button(ad, "Feel good until now...");
 
 	scroller = elm_scroller_add(_app_naviframe);
 

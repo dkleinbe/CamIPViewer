@@ -42,7 +42,7 @@ static void _response_cb(void *data, Evas_Object *obj, void *event_info)
 }
 
 void
-popup_text_1button(void *data, Evas_Object *obj, void *event_info)
+popup_text_1button(void *data, const char *txt)
 {
 	Evas_Object *popup;
 	Evas_Object *btn;
@@ -58,10 +58,7 @@ popup_text_1button(void *data, Evas_Object *obj, void *event_info)
 	layout = elm_layout_add(popup);
 	elm_layout_theme_set(layout, "layout", "popup", "content/circle");
 
-	elm_object_part_text_set(layout, "elm.text", "This is scrollable popup text."
-		"This part is made by adding long text in popup. Popup internally added "
-		"scroller to this layout when size of text is greater than total popup "
-		"height. This has one button in action area and does not have title area");
+	elm_object_part_text_set(layout, "elm.text", txt);
 	elm_object_content_set(popup, layout);
 
 	btn = elm_button_add(popup);
