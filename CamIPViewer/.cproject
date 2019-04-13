@@ -43,7 +43,7 @@
                             							
                             <builder autoBuildTarget="all" buildPath="${workspace_loc:/CamIPViewer}/Debug" enableAutoBuild="true" id="org.tizen.nativecore.target.sbi.gnu.builder.914551761" keepEnvironmentInBuildfile="false" managedBuildOn="true" name="Tizen Application Builder" superClass="org.tizen.nativecore.target.sbi.gnu.builder"/>
                             							
-                            <tool command="arm-linux-gnueabi-ar.exe" id="org.tizen.nativecore.tool.sbi.gnu.archiver.1990955022" name="Archiver" superClass="org.tizen.nativecore.tool.sbi.gnu.archiver"/>
+                            <tool command="i586-linux-gnueabi-ar.exe" id="org.tizen.nativecore.tool.sbi.gnu.archiver.1990955022" name="Archiver" superClass="org.tizen.nativecore.tool.sbi.gnu.archiver"/>
                             							
                             <tool command="clang++.exe" id="org.tizen.nativecore.tool.sbi.gnu.cpp.compiler.1890093926" name="C++ Compiler" superClass="org.tizen.nativecore.tool.sbi.gnu.cpp.compiler">
                                 								
@@ -55,7 +55,7 @@
                                 								
                                 <option id="sbi.gnu.cpp.compiler.option.327627612" name="Tizen-Target" superClass="sbi.gnu.cpp.compiler.option" valueType="userObjs">
                                     									
-                                    <listOptionValue builtIn="false" value="wearable-4.0-device.core_llvm40.armel"/>
+                                    <listOptionValue builtIn="false" value="wearable-4.0-emulator.core_llvm40.i386"/>
                                     								
                                 </option>
                                 								
@@ -244,8 +244,6 @@
                                     <listOptionValue builtIn="false" value=" -fPIE"/>
                                     									
                                     <listOptionValue builtIn="false" value="--sysroot=&quot;${SBI_SYSROOT}&quot;"/>
-                                    									
-                                    <listOptionValue builtIn="false" value="-mthumb"/>
                                     								
                                 </option>
                                 								
@@ -285,7 +283,7 @@
                                 								
                                 <option id="sbi.gnu.c.compiler.option.1400811102" name="Tizen-Target" superClass="sbi.gnu.c.compiler.option" valueType="userObjs">
                                     									
-                                    <listOptionValue builtIn="false" value="wearable-4.0-device.core_llvm40.armel"/>
+                                    <listOptionValue builtIn="false" value="wearable-4.0-emulator.core_llvm40.i386"/>
                                     								
                                 </option>
                                 								
@@ -474,8 +472,6 @@
                                     <listOptionValue builtIn="false" value=" -fPIE"/>
                                     									
                                     <listOptionValue builtIn="false" value="--sysroot=&quot;${SBI_SYSROOT}&quot;"/>
-                                    									
-                                    <listOptionValue builtIn="false" value="-mthumb"/>
                                     								
                                 </option>
                                 								
