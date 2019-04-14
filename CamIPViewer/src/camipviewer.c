@@ -1,6 +1,7 @@
 #include "camipviewer.h"
 #include "settings.h"
 #include "image.h"
+#include "video.h"
 #include "utils.h"
 
 static char *main_menu_names[] = {
@@ -82,6 +83,7 @@ image_cb(void *data, Evas_Object *obj, void *event_info)
 static void
 video_cb(void *data, Evas_Object *obj, void *event_info)
 {
+	create_video_view(data);
 }
 
 static Eina_Bool

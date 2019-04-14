@@ -56,7 +56,7 @@ _test_connection(const char *url, const char *proxy_address)
 		CURLcode ret;
 		curl_easy_setopt(curl, CURLOPT_URL, url);
 		curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address);
-		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 2);
+		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 2L);
 		curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 1L);
 		ret = curl_easy_perform(curl);
 		if (ret == CURLE_OK)
@@ -158,6 +158,7 @@ app_init_curl()
 			curl = curl_easy_init();
 	    	curl_easy_setopt(curl, CURLOPT_URL, url);
 	    	curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address);
+	    	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 6L);
 	    	curl_easy_setopt(curl, CURLOPT_USERNAME, get_setting(CAM_USER));
 	    	curl_easy_setopt(curl, CURLOPT_PASSWORD, get_setting(CAM_PASSWORD));
 	    	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
