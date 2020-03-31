@@ -44,6 +44,7 @@ create_video_view(appdata_s *ad)
 	Evas_Object *video_rect = NULL;
 	Elm_Object_Item *nf_video = NULL;
 	media_format_h mjpeg_fmt = NULL;
+	player_state_e state;
 	int ret = 0;
 	const char *res_path = get_resource_path("videos/video_360x240_1mb.mp4");
 
@@ -63,14 +64,15 @@ create_video_view(appdata_s *ad)
 
 	ret = player_create(&player);
 
-	ret = player_set_media_stream_info(player, PLAYER_STREAM_TYPE_VIDEO, mjpeg_fmt);
 
-	ret = player_set_streaming_user_agent(player, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36", 116);
-
-
+//#define MY_TEST
 #ifdef MY_TEST
 	ret = player_set_uri(player, res_path);
 #else
+	//ret = player_set_media_stream_info(player, PLAYER_STREAM_TYPE_VIDEO, mjpeg_fmt);
+
+	//ret = player_set_streaming_user_agent(player, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/73.0.3683.103 Safari/537.36", 116);
+
 	ret = player_set_uri(player, "http://192.168.1.22:8080/video");
 #endif
 
@@ -89,6 +91,10 @@ create_video_view(appdata_s *ad)
 		default:
 			break;
 	}
+
+	player_get_state(player, &state);
+
+
 	ret = player_prepare(player);
 	//ret = player_prepare_async(player, _prepare_cb, NULL);
 	switch (ret)
