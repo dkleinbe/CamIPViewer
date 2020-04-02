@@ -59,8 +59,12 @@ int fps_frame = 0;
 long fps_start = 0;
 long total_bytes = 0;
 
+/**
+ * @brief get http header
+ * @param buf
+ */
 static void
-on_headerline(char *buf)
+_on_headerline(char *buf)
 {
     // printf("HEADER: %s\n", buf);
     if (strncmp(buf, "Content-Length:", 15) == 0) {
@@ -71,9 +75,14 @@ on_headerline(char *buf)
         // printf("HEADER: Got content type = %s\n", buf + 14);
     }
 }
-
+/**
+ * @brief Create jpeg buffer from data
+ * @param[in] ptr pointer to image data
+ * @param[in] len nb bytes of image
+ * @param[in] ad application data
+ */
 static void
-on_frame(unsigned char *ptr, int len, appdata_s *ad)
+_on_frame(unsigned char *ptr, int len, appdata_s *ad)
 {
 
     if (jpeg_frame_index % jpeg_every == 0) {
@@ -95,9 +104,16 @@ on_frame(unsigned char *ptr, int len, appdata_s *ad)
 
     ecore_thread_feedback(ad->thread, fm);
 }
-
+/**
+ * @brief Curl callback for writing data
+ * @param ptr delivered data
+ * @param size 1
+ * @param nmemb size of that data
+ * @param userdata
+ * @return number of bytes consumed
+ */
 static size_t
-write_callback(char *ptr, size_t size, size_t nmemb, void *userdata)
+_write_callback_cb(char *ptr, size_t size, size_t nmemb, void *userdata)
 {
 	appdata_s *ad = userdata;
 
@@ -131,7 +147,7 @@ write_callback(char *ptr, size_t size, size_t nmemb, void *userdata)
                     headerline[p] = 0;
                     headerline[p-1] = 0;
                     // printf("got header newline after \"%s\".\n", headerline);
-                    on_headerline(headerline);
+                    _on_headerline(headerline);
                     if (strncmp(headerline, "--", 2) == 0)
                     {
                         // printf("got boundary.\n");
@@ -164,7 +180,7 @@ write_callback(char *ptr, size_t size, size_t nmemb, void *userdata)
             {
                 //printf("position %d / %d\n", jpeg_frame_position, jpeg_frame_size);
                 //printf("end of frame.\n");
-                on_frame(jpeg_buffer, jpeg_frame_size, ad);
+                _on_frame(jpeg_buffer, jpeg_frame_size, ad);
                 g_state = STATE_FRAME_HEADER;
                 memset(headerline, 0, 1000);
                 jpeg_frame_position = 0;
@@ -179,12 +195,16 @@ write_callback(char *ptr, size_t size, size_t nmemb, void *userdata)
     return nbytes;
 }
 
-/*
+
+/**
  * This function is called in the main thread whenever ecore_thread_feedback()
  * is called in the download thread.
+ * @param data application data
+ * @param thread
+ * @param msg_data feedback_msg_s
  */
 static void
-download_feedback_cb(void *data, Ecore_Thread *thread, void *msg_data)
+_download_feedback_cb(void *data, Ecore_Thread *thread, void *msg_data)
 {
     if (msg_data == NULL)
     {
@@ -200,11 +220,12 @@ download_feedback_cb(void *data, Ecore_Thread *thread, void *msg_data)
     		&fm->frame->image_file_buf,
 			fm->frame->image_size,
 			"jpg", NULL);
-
+    // FIXME: free message
+    //free(msg_data);
 }
 
 static void
-download_thread_cancel_cb(void *data, Ecore_Thread *thread)
+_download_thread_cancel_cb(void *data, Ecore_Thread *thread)
 {
     dlog_print(DLOG_DEBUG, LOG_TAG, "in download_thread_cancel_cb()");
 
@@ -214,11 +235,16 @@ download_thread_cancel_cb(void *data, Ecore_Thread *thread)
     }
 
     appdata_s *ad = (appdata_s *)data;
+    // FIXME: do the cleanup
     //thread_end_cleanup(ad);
 }
-
+/**
+ *
+ * @param data
+ * @param thread
+ */
 static void
-download_thread_end_cb(void *data, Ecore_Thread *thread)
+_download_thread_end_cb(void *data, Ecore_Thread *thread)
 {
     dlog_print(DLOG_DEBUG, LOG_TAG, "in download_thread_end_cb()");
 
@@ -228,6 +254,7 @@ download_thread_end_cb(void *data, Ecore_Thread *thread)
     }
 
     appdata_s *ad = (appdata_s *)data;
+    // FIXME: do the cleanup
     //thread_end_cleanup(ad);
 }
 
@@ -283,7 +310,7 @@ _download_thread(void *data, Ecore_Thread *thread)
 	// set URL to fetch
 	snprintf(url, 1023, "http://%s:%s/video", get_setting(CAM_IP), get_setting(CAM_PORT));
 
-	curl = init_curl_connection(connection, url, write_callback, ad);
+	curl = init_curl_connection(connection, url, _write_callback_cb, ad);
 	ad->curl = curl;
 	if (curl == NULL)
 	{
@@ -331,9 +358,9 @@ _start_video_streaming(void *data)
      */
     ad->thread = ecore_thread_feedback_run(
     		_download_thread,
-    		download_feedback_cb,
-			download_thread_end_cb,
-			download_thread_cancel_cb,
+    		_download_feedback_cb,
+			_download_thread_end_cb,
+			_download_thread_cancel_cb,
 			ad,
 			EINA_FALSE);
 
