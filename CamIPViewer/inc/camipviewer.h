@@ -32,9 +32,15 @@ typedef struct appdata{
 
 	connection_h connection;
 	CURL *curl;
+	Eina_Lock mutex;
+
 	bool downloading;
+	bool cancel_requested;
 	bool thread_running;
+	bool global_cleanup_needed;
 	bool cleanup_done;
+	bool exiting;
+
 } appdata_s;
 
 

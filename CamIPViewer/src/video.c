@@ -117,6 +117,10 @@ _write_callback_cb(char *ptr, size_t size, size_t nmemb, void *userdata)
 {
 	appdata_s *ad = userdata;
 
+	if (ad->cancel_requested == true)
+	{
+		return -1;
+	}
 	dlog_print(DLOG_INFO, LOG_TAG, "data read size: %d", nmemb);
 	//memcpy(downloaded_image.image_file_buf + downloaded_image.image_size, ptr, nmemb);
 	//downloaded_image.image_size += nmemb;
@@ -195,69 +199,6 @@ _write_callback_cb(char *ptr, size_t size, size_t nmemb, void *userdata)
     return nbytes;
 }
 
-
-/**
- * This function is called in the main thread whenever ecore_thread_feedback()
- * is called in the download thread.
- * @param data application data
- * @param thread
- * @param msg_data feedback_msg_s
- */
-static void
-_download_feedback_cb(void *data, Ecore_Thread *thread, void *msg_data)
-{
-    if (msg_data == NULL)
-    {
-        dlog_print(DLOG_ERROR, LOG_TAG, "msg_data is NULL");
-        return;
-    }
-
-    feedback_msg_s *fm = (feedback_msg_s *)msg_data;
-    appdata_s *ad = fm->ad;
-
-    elm_image_memfile_set(
-    		ad->image_jpg,
-    		&fm->frame->image_file_buf,
-			fm->frame->image_size,
-			"jpg", NULL);
-    // FIXME: free message
-    //free(msg_data);
-}
-
-static void
-_download_thread_cancel_cb(void *data, Ecore_Thread *thread)
-{
-    dlog_print(DLOG_DEBUG, LOG_TAG, "in download_thread_cancel_cb()");
-
-    if (data == NULL) {
-        dlog_print(DLOG_ERROR, LOG_TAG, "data is NULL");
-        return;
-    }
-
-    appdata_s *ad = (appdata_s *)data;
-    // FIXME: do the cleanup
-    //thread_end_cleanup(ad);
-}
-/**
- *
- * @param data
- * @param thread
- */
-static void
-_download_thread_end_cb(void *data, Ecore_Thread *thread)
-{
-    dlog_print(DLOG_DEBUG, LOG_TAG, "in download_thread_end_cb()");
-
-    if (data == NULL) {
-        dlog_print(DLOG_ERROR, LOG_TAG, "data is NULL");
-        return;
-    }
-
-    appdata_s *ad = (appdata_s *)data;
-    // FIXME: do the cleanup
-    //thread_end_cleanup(ad);
-}
-
 static void
 _cleanup(appdata_s *ad)
 {
@@ -287,10 +228,104 @@ _cleanup(appdata_s *ad)
 	connection_destroy(ad->connection);
 
     ad->cleanup_done = true;
+    ad->downloading = false;
+    downloaded_image.image_size = 0;
+}
+
+static
+void _thread_end_cleanup(appdata_s *ad)
+{
+    dlog_print(DLOG_DEBUG, LOG_TAG, "thread_end_cleanup(): taking lock");
+    eina_lock_take(&ad->mutex);
+    dlog_print(DLOG_DEBUG, LOG_TAG, "thread_end_cleanup(): lock taken");
+
+    _cleanup(ad);
+
+    if (ad->exiting)
+    {
+        if (ad->global_cleanup_needed)
+        {
+            curl_global_cleanup();
+            dlog_print(DLOG_DEBUG, LOG_TAG, "thread_end_cleanup(): curl_global_cleanup() called");
+            ad->global_cleanup_needed = false;
+        }
+    }
+
+    ad->thread_running = false;
+
+    dlog_print(DLOG_DEBUG, LOG_TAG, "thread_end_cleanup(): freeing lock");
+    eina_lock_release(&ad->mutex);
+}
+
+/**
+ * This function is called in the main thread whenever ecore_thread_feedback()
+ * is called in the download thread.
+ * @param data application data
+ * @param thread
+ * @param msg_data feedback_msg_s
+ */
+static void
+_download_feedback_cb(void *data, Ecore_Thread *thread, void *msg_data)
+{
+    if (msg_data == NULL)
+    {
+        dlog_print(DLOG_ERROR, LOG_TAG, "msg_data is NULL");
+        return;
+    }
+
+    feedback_msg_s *fm = (feedback_msg_s *)msg_data;
+    appdata_s *ad = fm->ad;
+
+    elm_image_memfile_set(
+    		ad->image_jpg,
+    		&fm->frame->image_file_buf,
+			fm->frame->image_size,
+			"jpg", NULL);
+
+    free(msg_data);
 }
 
 static void
-_download_thread(void *data, Ecore_Thread *thread)
+_download_thread_cancel_cb(void *data, Ecore_Thread *thread)
+{
+    dlog_print(DLOG_DEBUG, LOG_TAG, "in download_thread_cancel_cb()");
+
+    if (data == NULL) {
+        dlog_print(DLOG_ERROR, LOG_TAG, "data is NULL");
+        return;
+    }
+
+    appdata_s *ad = (appdata_s *)data;
+
+    _thread_end_cleanup(ad);
+}
+/**
+ *
+ * @param data
+ * @param thread
+ */
+static void
+_download_thread_end_cb(void *data, Ecore_Thread *thread)
+{
+    dlog_print(DLOG_DEBUG, LOG_TAG, "in download_thread_end_cb()");
+
+    if (data == NULL) {
+        dlog_print(DLOG_ERROR, LOG_TAG, "data is NULL");
+        return;
+    }
+
+    appdata_s *ad = (appdata_s *)data;
+
+    _thread_end_cleanup(ad);
+}
+
+/**
+ * Run curl in the downloading thread
+ * @param data
+ * @param thread
+ */
+static void
+_download_thread_cb(void *data, Ecore_Thread *thread)
 {
 	CURL *curl;
 	CURLcode curl_err;
@@ -298,7 +333,9 @@ _download_thread(void *data, Ecore_Thread *thread)
 	char url[1024];
 
 	appdata_s *ad = data;
-
+	//
+	// Test net connection
+	//
 	if (init_net_connection(&connection) != true)
 	{
 		dlog_print(DLOG_ERROR, LOG_TAG, "CONNECTION ERROR");
@@ -309,7 +346,9 @@ _download_thread(void *data, Ecore_Thread *thread)
 
 	// set URL to fetch
 	snprintf(url, 1023, "http://%s:%s/video", get_setting(CAM_IP), get_setting(CAM_PORT));
-
+	//
+	// Init curl connection
+	//
 	curl = init_curl_connection(connection, url, _write_callback_cb, ad);
 	ad->curl = curl;
 	if (curl == NULL)
@@ -318,14 +357,15 @@ _download_thread(void *data, Ecore_Thread *thread)
 		_cleanup(ad);
 		return;
 	}
+	//
+	// Perform blocking http streaming
+	//
 	curl_err = curl_easy_perform(curl);
 	if (curl_err == CURLE_ABORTED_BY_CALLBACK)
 	{
 		dlog_print(DLOG_ERROR, LOG_TAG, "CURLE_ABORTED_BY_CALLBACK");
 
 		_cleanup(ad);
-
-		ad->downloading = false;
 
 		//reset_progress(ad);
 		return;
@@ -341,12 +381,27 @@ _download_thread(void *data, Ecore_Thread *thread)
 	_cleanup(ad);
 
 }
-
+/**
+ * Start streaming thread
+ * @param data application data
+ * @return
+ */
 static bool
 _start_video_streaming(void *data)
 {
 
 	appdata_s *ad = data;
+	// Start download
+
+	if (ad->downloading)
+	{
+		// Cancel current download
+		ad->cancel_requested = true;
+		return false;
+	}
+	ad->downloading = true;
+	ad->cancel_requested = false;
+	ad->cleanup_done = false;
     /*
      * Start a thread which will communicate with the main thread
      * by calling ecore_thread_feedback(), which will cause download_feedback_cb()
@@ -357,7 +412,7 @@ _start_video_streaming(void *data)
      * thread.
      */
     ad->thread = ecore_thread_feedback_run(
-    		_download_thread,
+    		_download_thread_cb,
     		_download_feedback_cb,
 			_download_thread_end_cb,
 			_download_thread_cancel_cb,
@@ -456,7 +511,10 @@ _rotary_handler_cb(void *data, Eext_Rotary_Event_Info *ev)
 static Eina_Bool
 _image_pop_cb(void *data, Elm_Object_Item *it)
 {
+	appdata_s *ad = data;
+
 	eext_rotary_event_handler_del(_rotary_handler_cb);
+	ad->cancel_requested = true;
 	return EINA_TRUE;
 }
 
@@ -485,12 +543,6 @@ create_video_view(appdata_s *ad)
 
 	jpeg_buffer = (unsigned char *)malloc(JPEG_BUFFER_SIZE);
 
-	if (! _start_video_streaming(_appdata))
-	{
-		popup_text_1button(ad, "Can\'t get image :(");
-		return;
-	}
-
 	scroller = elm_scroller_add(_app_naviframe);
 
 	elm_scroller_bounce_set(scroller, EINA_TRUE, EINA_TRUE);
@@ -512,7 +564,7 @@ create_video_view(appdata_s *ad)
 	image_jpg = elm_image_add(layout);
 	ad->image_jpg = image_jpg;
 
-	elm_image_memfile_set(image_jpg, &downloaded_image.image_file_buf, downloaded_image.image_size, "jpg", NULL);
+	//elm_image_memfile_set(image_jpg, &downloaded_image.image_file_buf, downloaded_image.image_size, "jpg", NULL);
 
 	elm_object_part_content_set(layout, "image1", image_jpg);
 
@@ -549,5 +601,11 @@ create_video_view(appdata_s *ad)
 	eext_rotary_event_handler_add(_rotary_handler_cb, image_jpg);
 
 	nf_image = elm_naviframe_item_push(_app_naviframe, NULL, NULL, NULL, scroller, "empty");
-	elm_naviframe_item_pop_cb_set(nf_image, _image_pop_cb, NULL);
+	elm_naviframe_item_pop_cb_set(nf_image, _image_pop_cb, ad);
+
+	if (! _start_video_streaming(_appdata))
+	{
+		popup_text_1button(ad, "Can\'t get image :(");
+		return;
+	}
 }

@@ -237,16 +237,31 @@ create_base_gui(appdata_s *ad)
 	evas_object_show(ad->win);
 
 }
-
+/**
+ * Hook to take necessary actions before main event loop starts
+ *  Initialize UI resources and application's data
+ *  If this function returns true, the main loop of application starts
+ *  If this function returns false, the application is terminated
+ *
+ * @param data
+ * @return
+ */
 static bool
-app_create(void *data)
+_app_create_cb(void *data)
 {
-	/* Hook to take necessary actions before main event loop starts
-	   Initialize UI resources and application's data
-	   If this function returns true, the main loop of application starts
-	   If this function returns false, the application is terminated */
-	appdata_s *ad = data;
 
+	appdata_s *ad = data;
+	ad->global_cleanup_needed = false;
+
+	//
+	// Create base UI
+	//
+	create_base_gui(ad);
+	//
+    // Initialize libcurl
+    // Should be done when there is only one thread running in the app,
+    // as the function is not thread safe.
+	//
     CURLcode error_code = curl_global_init(CURL_GLOBAL_ALL);
     if (CURLE_OK != error_code) {
         char error_message[1024];
@@ -257,7 +272,12 @@ app_create(void *data)
         return false;
     }
 
-	create_base_gui(ad);
+    ad->global_cleanup_needed = true;
+
+    eina_lock_new(&ad->mutex);
+    ad->thread_running = false;
+    ad->exiting = false;
+
 
 	return true;
 }
@@ -281,9 +301,27 @@ app_resume(void *data)
 }
 
 static void
-app_terminate(void *data)
+_app_terminate_cb(void *data)
 {
 	/* Release all resources. */
+    appdata_s *ad = data;
+
+    ad->exiting = true;
+    ad->cancel_requested = true;
+
+    dlog_print(DLOG_DEBUG, LOG_TAG, "app_terminate(): taking lock");
+    eina_lock_take(&ad->mutex);
+    dlog_print(DLOG_DEBUG, LOG_TAG, "app_terminate(): lock taken");
+
+    if (ad->global_cleanup_needed && !ad->thread_running)
+    {
+        curl_global_cleanup();
+        ad->global_cleanup_needed = false;
+        dlog_print(DLOG_DEBUG, LOG_TAG, "app_terminate(): curl_global_cleanup() called");
+    }
+
+    dlog_print(DLOG_DEBUG, LOG_TAG, "app_terminate(): freeing lock");
+    eina_lock_release(&ad->mutex);
 }
 
 static void
@@ -337,13 +375,15 @@ main(int argc, char *argv[])
 	appdata_s ad = {0,};
 	int ret = 0;
 
+	memset(&ad, 0x00, sizeof(appdata_s));
+
 	ui_app_lifecycle_callback_s event_callback = {0,};
 	app_event_handler_h handlers[5] = {NULL, };
 
 	dlog_print(DLOG_INFO, LOG_TAG, "ENTERING main() PID: <%d>", getpid());
 
-	event_callback.create = app_create;
-	event_callback.terminate = app_terminate;
+	event_callback.create = _app_create_cb;
+	event_callback.terminate = _app_terminate_cb;
 	event_callback.pause = app_pause;
 	event_callback.resume = app_resume;
 	event_callback.app_control = app_control;
