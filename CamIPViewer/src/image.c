@@ -9,8 +9,9 @@
 #include <curl/curl.h>
 #include <system_info.h>
 #include "utils.h"
-#include "image.h"
 #include "settings.h"
+#include "image.h"
+
 
 #define IMAGE_WIDTH 1024
 #define IMAGE_HEIGHT 768
@@ -46,139 +47,42 @@ write_callback(char *ptr, size_t size, size_t nmemb, void *userdata)
 	return nmemb;
 }
 
-static bool
-_test_connection(const char *url, const char *proxy_address)
-{
-	CURL *curl;
-	curl = curl_easy_init();
-	if (curl)
-	{
-		CURLcode ret;
-		curl_easy_setopt(curl, CURLOPT_URL, url);
-		curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address);
-		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 2L);
-		curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 1L);
-		ret = curl_easy_perform(curl);
-		if (ret == CURLE_OK)
-		{
-			curl_easy_cleanup(curl);
-			return true;
-		}
-		curl_easy_cleanup(curl);
-	}
-	return false;
-}
 
 static bool
 app_init_curl()
 {
 	CURL *curl;
 	CURLcode curl_err;
-
-	bool internet_available = false;
 	connection_h connection;
-	connection_type_e type;
-	char *proxy_address;
 	char url[1024];
 
-	int ret = 0;
-	int conn_err = -1;
-
-	if ((ret = connection_create(&connection)) == CONNECTION_ERROR_NONE)
+	if (init_net_connection(&connection) != true)
 	{
-
-		ret = connection_get_type(connection, &type);
-	    if(ret == CONNECTION_ERROR_NONE)
-	    {
-	    	internet_available = false;
-	    	switch (type)
-			{
-	    		case CONNECTION_TYPE_DISCONNECTED:
-	    			dlog_print(DLOG_ERROR, LOG_TAG, "CONNECTION_TYPE_DISCONNECTED");
-
-	    			break;
-	    		case CONNECTION_TYPE_WIFI:
-	    			dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_WIFI");
-
-	    			internet_available = true;
-
-	    			break;
-	    		case CONNECTION_TYPE_CELLULAR:
-					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_CELLULAR");
-
-	    			internet_available = true;
-
-					break;
-	    		case CONNECTION_TYPE_ETHERNET:
-					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_ETHERNET");
-
-	    			internet_available = true;
-
-					break;
-	    		case CONNECTION_TYPE_BT:
-					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_BT");
-
-	    			internet_available = true;
-
-					break;
-	    		case CONNECTION_TYPE_NET_PROXY:
-					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_NET_PROXY");
-
-	    			internet_available = true;
-
-					break;
-	    		default:
-	    			dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_UNKNOWN");
-
-	    			break;
-			}
-
-	    	if (internet_available != true)
-	    	{
-	    		// No connection available
-	    		connection_destroy(connection);
-	    		return false;
-	    	}
-	    	downloaded_image.image_size = 0;
-
-	    	// set URL to fetch
-	    	snprintf(url, 1023, "http://%s:%s/shot.jpg", get_setting(CAM_IP), get_setting(CAM_PORT));
-	    	// get proxy settings
-			conn_err = connection_get_proxy(connection, CONNECTION_ADDRESS_FAMILY_IPV4, &proxy_address);
-			if ( ! (conn_err == CONNECTION_ERROR_NONE && proxy_address))
-			{
-				return false;
-			}
-			// test connection to cam
-			if (_test_connection(url, proxy_address) != true)
-			{
-				connection_destroy(connection);
-				return false;
-			}
-			curl = curl_easy_init();
-	    	curl_easy_setopt(curl, CURLOPT_URL, url);
-	    	curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address);
-	    	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 6L);
-	    	curl_easy_setopt(curl, CURLOPT_USERNAME, get_setting(CAM_USER));
-	    	curl_easy_setopt(curl, CURLOPT_PASSWORD, get_setting(CAM_PASSWORD));
-	    	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
-	    	curl_err = curl_easy_perform(curl);
-	    	if (curl_err != CURLE_OK)
-	    	{
-	    		dlog_print(DLOG_ERROR, LOG_TAG, "CURL ERROR");
-	    		return false;
-	    	}
-		    curl_easy_cleanup(curl);
-		    connection_unset_proxy_address_changed_cb(connection);
-		    connection_destroy(connection);
-		    return true;
-	    }
-	}
-	else {
 		dlog_print(DLOG_ERROR, LOG_TAG, "CONNECTION ERROR");
 		return false;
 	}
-	return false;
+	downloaded_image.image_size = 0;
+
+	// set URL to fetch
+	snprintf(url, 1023, "http://%s:%s/shot.jpg", get_setting(CAM_IP), get_setting(CAM_PORT));
+
+	curl = init_curl_connection(connection, url, write_callback, NULL);
+	if (curl == NULL)
+	{
+		dlog_print(DLOG_ERROR, LOG_TAG, "CURL INIT ERROR");
+		return false;
+	}
+	curl_err = curl_easy_perform(curl);
+	if (curl_err != CURLE_OK)
+	{
+		dlog_print(DLOG_ERROR, LOG_TAG, "CURL ERROR");
+		return false;
+	}
+	curl_easy_cleanup(curl);
+	connection_unset_proxy_address_changed_cb(connection);
+	connection_destroy(connection);
+	return true;
+
 }
 #endif /* MY_TEST */
 

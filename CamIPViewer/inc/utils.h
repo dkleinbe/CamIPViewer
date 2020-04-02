@@ -8,6 +8,8 @@
 #if !defined(_UTILS_H_)
 #define _UTILS_H_
 
+#include <net_connection.h>
+#include <curl/curl.h>
 #include "camipviewer.h"
 
 #define MAX_LENGTH_PATH 1024
@@ -30,6 +32,9 @@ static inline const char *get_resource_path(const char *file_path)
 #ifdef __cplusplus
 extern "C" {
 #endif
+	bool init_net_connection(connection_h *connection);
+	bool test_curl_connection(const char *url, const char *proxy_address);
+	CURL *init_curl_connection(connection_h connection, char *url, void *write_callback, void *data);
 	void app_get_resource(const char *edj_file_in, char *edj_path_out, int edj_path_max);
 	void popup_text_1button(void *data, const char *txt);
 #ifdef __cplusplus

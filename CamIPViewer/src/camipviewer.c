@@ -247,6 +247,16 @@ app_create(void *data)
 	   If this function returns false, the application is terminated */
 	appdata_s *ad = data;
 
+    CURLcode error_code = curl_global_init(CURL_GLOBAL_ALL);
+    if (CURLE_OK != error_code) {
+        char error_message[1024];
+        snprintf((char *)error_message, 1024, "Download Information: <br>"
+                 "cURL initialization failed: %s", curl_easy_strerror(error_code));
+
+        dlog_print(DLOG_ERROR, LOG_TAG, error_message);
+        return false;
+    }
+
 	create_base_gui(ad);
 
 	return true;
