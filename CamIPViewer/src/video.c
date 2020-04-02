@@ -29,35 +29,22 @@ static Evas_Object *layout;
 static int screen_size_w = 0;
 static int screen_size_h = 0;
 
-
-
-
 static image_data_s downloaded_image;
 
-int debug_output_frame = 0;
-int g_state = STATE_MAIN_HEADER;
-int jpeg_frame_size = 0;
-int jpeg_frame_index = 0;
+static int g_state = STATE_MAIN_HEADER;
+static int jpeg_frame_size = 0;
+static int jpeg_frame_index = 0;
 
-int jpeg_every = 1;
+static int jpeg_every = 1;
 
-int jpeg_frame_position = 0;
-int jpeg_num_headers = 0;
-int block_counter = 0;
-char jpeg_filename[100];
-FILE *jpeg_file;
-unsigned char *jpeg_buffer;
-char headerline[1000] = { 0, };
-char stream_url[1000];
-char stream_auth[100];
-int debug_image_written = false;
+static int jpeg_frame_position = 0;
+static int jpeg_num_headers = 0;
+static int block_counter = 0;
+static unsigned char *jpeg_buffer;
+static char headerline[1000] = { 0, };
 
-int frame_width = 0;
-int frame_height = 0;
 
-int fps_frame = 0;
-long fps_start = 0;
-long total_bytes = 0;
+static long total_bytes = 0;
 
 /**
  * @brief get http header
@@ -360,6 +347,7 @@ _download_thread_cb(void *data, Ecore_Thread *thread)
 	//
 	// Perform blocking http streaming
 	//
+	ad->downloading = true;
 	curl_err = curl_easy_perform(curl);
 	if (curl_err == CURLE_ABORTED_BY_CALLBACK)
 	{
@@ -399,9 +387,7 @@ _start_video_streaming(void *data)
 		ad->cancel_requested = true;
 		return false;
 	}
-	ad->downloading = true;
-	ad->cancel_requested = false;
-	ad->cleanup_done = false;
+
     /*
      * Start a thread which will communicate with the main thread
      * by calling ecore_thread_feedback(), which will cause download_feedback_cb()
@@ -501,6 +487,8 @@ _rotary_handler_cb(void *data, Eext_Rotary_Event_Info *ev)
 	w = (current_w > screen_size_w) ? screen_size_w : w;
 	h = (current_h > screen_size_h) ? screen_size_h : h;
 	// set scroll region
+	dlog_print(DLOG_DEBUG, LOG_TAG, "SCROLL REGION %d %d %d %d",  x, y, w, h);
+
 	elm_scroller_region_show(scroller, x, y, w, h);
 
 	evas_object_show(image);
@@ -515,6 +503,9 @@ _image_pop_cb(void *data, Elm_Object_Item *it)
 
 	eext_rotary_event_handler_del(_rotary_handler_cb);
 	ad->cancel_requested = true;
+
+	free(jpeg_buffer);
+
 	return EINA_TRUE;
 }
 
@@ -537,6 +528,19 @@ create_video_view(appdata_s *ad)
 
 	_appdata = ad;
 	_app_naviframe = ad->naviframe;
+
+	ad->downloading = false;
+	ad->cancel_requested = false;
+	ad->cleanup_done = false;
+	//
+	// init mjpeg decoder
+	//
+	jpeg_frame_index = 0;
+	jpeg_frame_position = 0;
+	jpeg_num_headers = 0;
+	block_counter = 0;
+	headerline[0] = 0;
+	total_bytes = 0;
 
 	system_info_get_platform_int("tizen.org/feature/screen.width", &screen_size_w);
 	system_info_get_platform_int("tizen.org/feature/screen.height", &screen_size_h);
