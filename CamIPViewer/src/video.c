@@ -40,7 +40,7 @@ static int jpeg_every = 1;
 static int jpeg_frame_position = 0;
 static int jpeg_num_headers = 0;
 static int block_counter = 0;
-static unsigned char *jpeg_buffer;
+static unsigned char *jpeg_buffer = NULL;
 static char headerline[1000] = { 0, };
 
 
@@ -63,6 +63,20 @@ static void _on_headerline(char *buf)
 		// printf("HEADER: Got content type = %s\n", buf + 14);
 	}
 }
+static void
+_on_connection_error(appdata_s *ad)
+{
+	feedback_msg_s *fm = malloc(sizeof(feedback_msg_s));
+
+	fm->ad = ad;
+	fm->frame = NULL;
+	fm->command = FEEDBACK_CMD_CONNECTION_ERROR;
+
+	dlog_print(DLOG_INFO, LOG_TAG, "FEEDBACK_CMD_CONNECTION_ERROR");
+
+	ecore_thread_feedback(ad->thread, fm);
+}
+
 /**
  * @brief Create jpeg buffer from data
  * @param[in] ptr pointer to image data
@@ -93,6 +107,74 @@ _on_frame(unsigned char *ptr, int len, appdata_s *ad)
 
 	ecore_thread_feedback(ad->thread, fm);
 }
+
+/**
+ * This function is called in the main thread whenever ecore_thread_feedback()
+ * is called in the download thread.
+ * @param data application data
+ * @param thread
+ * @param msg_data feedback_msg_s
+ */
+static void
+_download_feedback_cb(void *data, Ecore_Thread *thread, void *msg_data)
+{
+    if (msg_data == NULL)
+    {
+        dlog_print(DLOG_ERROR, LOG_TAG, "msg_data is NULL");
+        return;
+    }
+
+    feedback_msg_s *fm = (feedback_msg_s *)msg_data;
+    appdata_s *ad = fm->ad;
+
+    switch (fm->command)
+    {
+		case FEEDBACK_CMD_NONE:
+
+			dlog_print(DLOG_ERROR, LOG_TAG, "No command set");
+			break;
+
+		case FEEDBACK_CMD_NEW_FRAME:
+
+			elm_image_memfile_set(
+					ad->image_jpg,
+					&fm->frame->image_file_buf,
+					fm->frame->image_size,
+					"jpg", NULL);
+			break;
+
+		case FEEDBACK_CMD_CONNECTION_ERROR:
+
+			popup_text_1button(ad, "Can\'t get video :(");
+			elm_naviframe_item_pop(ad->naviframe);
+			break;
+
+		default:
+			break;
+    }
+
+    free(msg_data);
+}
+static int
+_progress_callback_cb(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
+{
+    if (!clientp)
+    {
+        dlog_print(DLOG_ERROR, LOG_TAG, "data is NULL");
+        return 0;
+    }
+
+    appdata_s *ad = (appdata_s *)clientp;
+    if (ad->cancel_requested)
+    {
+    	dlog_print(DLOG_DEBUG, LOG_TAG, "in progress_cb(): cancelling");
+    	ad->cancel_requested = false;
+
+    	return 1;
+
+    }
+    return 0;
+}
 /**
  * @brief Curl callback for writing data
  * @param ptr delivered data
@@ -106,14 +188,7 @@ _write_callback_cb(char *ptr, size_t size, size_t nmemb, void *userdata)
 {
 	appdata_s *ad = userdata;
 
-	if (ad->cancel_requested == true)
-	{
-		return -1;
-	}
 	dlog_print(DLOG_INFO, LOG_TAG, "data read size: %d", nmemb);
-	//memcpy(downloaded_image.image_file_buf + downloaded_image.image_size, ptr, nmemb);
-	//downloaded_image.image_size += nmemb;
-	//return nmemb;
 
     unsigned char *bptr = (unsigned char *)ptr;
 
@@ -201,6 +276,11 @@ _cleanup(appdata_s *ad)
     if (ad->curl != NULL)
     {
         curl_easy_cleanup(ad->curl);
+
+        if (jpeg_buffer)
+        	free(jpeg_buffer);
+    	jpeg_buffer = NULL;
+
         dlog_print(DLOG_DEBUG, LOG_TAG, "curl_easy_cleanup(ad->curl)");
     } else
         dlog_print(DLOG_DEBUG, LOG_TAG, "cleanup(): ad->curl is NULL");
@@ -217,6 +297,8 @@ _cleanup(appdata_s *ad)
     ad->cleanup_done = true;
     ad->downloading = false;
     downloaded_image.image_size = 0;
+
+
 }
 
 static
@@ -228,49 +310,12 @@ void _thread_end_cleanup(appdata_s *ad)
 
     _cleanup(ad);
 
-    if (ad->exiting)
-    {
-        if (ad->global_cleanup_needed)
-        {
-            curl_global_cleanup();
-            dlog_print(DLOG_DEBUG, LOG_TAG, "thread_end_cleanup(): curl_global_cleanup() called");
-            ad->global_cleanup_needed = false;
-        }
-    }
-
     ad->thread_running = false;
 
     dlog_print(DLOG_DEBUG, LOG_TAG, "thread_end_cleanup(): freeing lock");
     eina_lock_release(&ad->mutex);
 }
 
-/**
- * This function is called in the main thread whenever ecore_thread_feedback()
- * is called in the download thread.
- * @param data application data
- * @param thread
- * @param msg_data feedback_msg_s
- */
-static void
-_download_feedback_cb(void *data, Ecore_Thread *thread, void *msg_data)
-{
-    if (msg_data == NULL)
-    {
-        dlog_print(DLOG_ERROR, LOG_TAG, "msg_data is NULL");
-        return;
-    }
-
-    feedback_msg_s *fm = (feedback_msg_s *)msg_data;
-    appdata_s *ad = fm->ad;
-
-    elm_image_memfile_set(
-    		ad->image_jpg,
-    		&fm->frame->image_file_buf,
-			fm->frame->image_size,
-			"jpg", NULL);
-
-    free(msg_data);
-}
 
 static void
 _download_thread_cancel_cb(void *data, Ecore_Thread *thread)
@@ -336,11 +381,13 @@ _download_thread_cb(void *data, Ecore_Thread *thread)
 	//
 	// Init curl connection
 	//
-	curl = init_curl_connection(connection, url, _write_callback_cb, ad);
+	curl = init_curl_connection(connection, url, _write_callback_cb, ad, _progress_callback_cb, ad);
 	ad->curl = curl;
 	if (curl == NULL)
 	{
 		dlog_print(DLOG_ERROR, LOG_TAG, "CURL INIT ERROR");
+		_on_connection_error(ad);
+
 		_cleanup(ad);
 		return;
 	}
@@ -368,9 +415,6 @@ _download_thread_cb(void *data, Ecore_Thread *thread)
 				curl_err);
 
 	}
-
-	free(jpeg_buffer);
-	jpeg_buffer = NULL;
 
 	_cleanup(ad);
 
@@ -412,7 +456,10 @@ _start_video_streaming(void *data)
 			EINA_FALSE);
 
     if (ad->thread == NULL)
+    {
         dlog_print(DLOG_ERROR, LOG_TAG, "Could not create thread");
+        return false;
+    }
     else
         ad->thread_running = true;
 
@@ -539,6 +586,7 @@ create_video_view(appdata_s *ad)
 	//
 	// init mjpeg decoder
 	//
+	jpeg_buffer = NULL;
 	jpeg_frame_index = 0;
 	jpeg_frame_position = 0;
 	jpeg_num_headers = 0;
@@ -611,7 +659,7 @@ create_video_view(appdata_s *ad)
 
 	if (! _start_video_streaming(_appdata))
 	{
-		popup_text_1button(ad, "Can\'t get image :(");
+		popup_text_1button(ad, "Can\'t get video :(");
 		return;
 	}
 }

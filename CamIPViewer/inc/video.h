@@ -30,7 +30,8 @@ typedef enum feedback_cmd_e {
     FEEDBACK_CMD_NONE,
 	FEEDBACK_CMD_NEW_FRAME,
     FEEDBACK_CMD_RESET_ALL,
-    FEEDBACK_CMD_RESET_PROGRESS
+    FEEDBACK_CMD_RESET_PROGRESS,
+	FEEDBACK_CMD_CONNECTION_ERROR
 } feedback_cmd_e;
 
 // Message structure, which holds the command and its details.

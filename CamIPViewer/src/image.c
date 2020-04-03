@@ -66,7 +66,7 @@ app_init_curl()
 	// set URL to fetch
 	snprintf(url, 1023, "http://%s:%s/shot.jpg", get_setting(CAM_IP), get_setting(CAM_PORT));
 
-	curl = init_curl_connection(connection, url, write_callback, NULL);
+	curl = init_curl_connection(connection, url, write_callback, NULL,NULL, NULL);
 	if (curl == NULL)
 	{
 		dlog_print(DLOG_ERROR, LOG_TAG, "CURL INIT ERROR");

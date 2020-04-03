@@ -110,15 +110,27 @@ init_net_connection(connection_h *connection)
  	}
  	return false;
  }
-
+/**
+ *
+ * @param connection
+ * @param url
+ * @param write_callback
+ * @param write_data
+ * @param progress_callback
+ * @param progress_data
+ * @return
+ */
 CURL *
 init_curl_connection(
 		connection_h connection,
 		char *url,
 		void *write_callback,
-		void *data)
+		void *write_data,
+		void *progress_callback,
+		void *progress_data)
 {
 	CURL *curl;
+	CURLcode error_code;
 	char *proxy_address;
 	int conn_err = -1;
 
@@ -144,13 +156,82 @@ init_curl_connection(
 		return NULL;
 
 	}
-	curl_easy_setopt(curl, CURLOPT_URL, url);
-	curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address);
-	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 6L);
-	curl_easy_setopt(curl, CURLOPT_USERNAME, get_setting(CAM_USER));
-	curl_easy_setopt(curl, CURLOPT_PASSWORD, get_setting(CAM_PASSWORD));
-	curl_easy_setopt(curl, CURLOPT_WRITEDATA, data);
-	curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+	error_code = curl_easy_setopt(curl, CURLOPT_URL, url);
+	if (error_code != CURLE_OK)
+	{
+		dlog_print(DLOG_ERROR, LOG_TAG,
+		                   "error_code = curl_easy_setopt(curl, CURLOPT_URL, url): %s (%d)",
+		                   curl_easy_strerror(error_code), error_code);
+	}
+	error_code = curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address);
+	if (error_code != CURLE_OK)
+	{
+		dlog_print(DLOG_ERROR, LOG_TAG,
+		                   "curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address): %s (%d)",
+		                   curl_easy_strerror(error_code), error_code);
+	}
+	error_code = curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 6L);
+	if (error_code != CURLE_OK)
+	{
+		dlog_print(DLOG_ERROR, LOG_TAG,
+						   "curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 6L): %s (%d)",
+						   curl_easy_strerror(error_code), error_code);
+	}
+	error_code = curl_easy_setopt(curl, CURLOPT_USERNAME, get_setting(CAM_USER));
+	if (error_code != CURLE_OK)
+	{
+		dlog_print(DLOG_ERROR, LOG_TAG,
+						   "curl_easy_setopt(curl, CURLOPT_USERNAME, get_setting(CAM_USER)): %s (%d)",
+						   curl_easy_strerror(error_code), error_code);
+	}
+	error_code = curl_easy_setopt(curl, CURLOPT_PASSWORD, get_setting(CAM_PASSWORD));
+	if (error_code != CURLE_OK)
+	{
+		dlog_print(DLOG_ERROR, LOG_TAG,
+						   "curl_easy_setopt(curl, CURLOPT_PASSWORD, get_setting(CAM_PASSWORD)): %s (%d)",
+						   curl_easy_strerror(error_code), error_code);
+	}
+	error_code = curl_easy_setopt(curl, CURLOPT_WRITEDATA, write_data);
+	if (error_code != CURLE_OK)
+	{
+		dlog_print(DLOG_ERROR, LOG_TAG,
+						   "curl_easy_setopt(curl, CURLOPT_WRITEDATA, write_data): %s (%d)",
+						   curl_easy_strerror(error_code), error_code);
+	}
+	error_code = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
+	if (error_code != CURLE_OK)
+	{
+		dlog_print(DLOG_ERROR, LOG_TAG,
+						   "curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback): %s (%d)",
+						   curl_easy_strerror(error_code), error_code);
+	}
+	if (progress_callback)
+	{
+		// Enable the built-in progress meter
+		error_code = curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
+		if (error_code != CURLE_OK)
+		{
+			dlog_print(DLOG_ERROR, LOG_TAG,
+							   "curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L): %s (%d)",
+							   curl_easy_strerror(error_code), error_code);
+		}
+		// Set progress callback data
+		error_code = curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progress_data);
+		if (error_code != CURLE_OK)
+		{
+			dlog_print(DLOG_ERROR, LOG_TAG,
+							   "curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progress_data): %s (%d)",
+							   curl_easy_strerror(error_code), error_code);
+		}
+		// Set the progress callback
+		error_code = curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, progress_callback);
+		if (error_code != CURLE_OK)
+		{
+			dlog_print(DLOG_ERROR, LOG_TAG,
+							   "curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progress_callback): %s (%d)",
+							   curl_easy_strerror(error_code), error_code);
+		}
+	}
 
 	return curl;
 }

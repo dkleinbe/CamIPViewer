@@ -33,7 +33,7 @@ extern "C" {
 #endif
 	bool init_net_connection(connection_h *connection);
 	bool test_curl_connection(const char *url, const char *proxy_address);
-	CURL *init_curl_connection(connection_h connection, char *url, void *write_callback, void *data);
+	CURL *init_curl_connection(connection_h connection, char *url, void *write_callback, void *write_data, void *progress_callback, void *progress_data);
 	void app_get_resource(const char *edj_file_in, char *edj_path_out, int edj_path_max);
 	void popup_text_1button(void *data, const char *txt);
 #ifdef __cplusplus
