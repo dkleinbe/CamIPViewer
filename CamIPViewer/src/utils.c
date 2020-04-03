@@ -28,6 +28,7 @@
  		curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address);
  		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 2L);
  		curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 1L);
+ 		dlog_print(DLOG_INFO, LOG_TAG, "test_curl_connection url: [%s] proxy: [%s]", url, proxy_address);
  		ret = curl_easy_perform(curl);
  		if (ret == CURLE_OK)
  		{
@@ -144,6 +145,7 @@ init_curl_connection(
 	// test connection to url
 	if (test_curl_connection(url, proxy_address) != true)
 	{
+		dlog_print(DLOG_ERROR, LOG_TAG, "test_curl_connection: ERROR");
 		connection_destroy(connection);
 		return NULL;
 	}
