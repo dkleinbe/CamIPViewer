@@ -8,8 +8,7 @@
 #if !defined(_UTILS_H_)
 #define _UTILS_H_
 
-#include <net_connection.h>
-#include <curl/curl.h>
+
 #include "camipviewer.h"
 
 #define MAX_LENGTH_PATH 1024

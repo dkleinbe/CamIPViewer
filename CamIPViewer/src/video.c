@@ -50,17 +50,18 @@ static long total_bytes = 0;
  * @brief get http header
  * @param buf
  */
-static void
-_on_headerline(char *buf)
+static void _on_headerline(char *buf)
 {
-    // printf("HEADER: %s\n", buf);
-    if (strncmp(buf, "Content-Length:", 15) == 0) {
-        jpeg_frame_size = atoi(buf + 16);
-        // printf("HEADER: Got content length = %d bytes\n", jpeg_frame_size);
-    }
-    if (strncmp(buf, "Content-Type:", 13) == 0) {
-        // printf("HEADER: Got content type = %s\n", buf + 14);
-    }
+	// printf("HEADER: %s\n", buf);
+	if (strncmp(buf, "Content-Length:", 15) == 0)
+	{
+		jpeg_frame_size = atoi(buf + 16);
+		// printf("HEADER: Got content length = %d bytes\n", jpeg_frame_size);
+	}
+	if (strncmp(buf, "Content-Type:", 13) == 0)
+	{
+		// printf("HEADER: Got content type = %s\n", buf + 14);
+	}
 }
 /**
  * @brief Create jpeg buffer from data
@@ -72,24 +73,25 @@ static void
 _on_frame(unsigned char *ptr, int len, appdata_s *ad)
 {
 
-    if (jpeg_frame_index % jpeg_every == 0) {
-        //decode_into_current(ptr, len);
-        //current_callback(bmp);
-    }
-    memcpy(downloaded_image.image_file_buf, ptr, len);
-    downloaded_image.image_size = len;
+	if (jpeg_frame_index % jpeg_every == 0)
+	{
+		//decode_into_current(ptr, len);
+		//current_callback(bmp);
+	}
+	memcpy(downloaded_image.image_file_buf, ptr, len);
+	downloaded_image.image_size = len;
 
-    jpeg_frame_index ++;
+	jpeg_frame_index++;
 
-    feedback_msg_s *fm = malloc(sizeof(feedback_msg_s));
+	feedback_msg_s *fm = malloc(sizeof(feedback_msg_s));
 
-    fm->ad = ad;
-    fm->frame = &downloaded_image;
-    fm->command = FEEDBACK_CMD_NEW_FRAME;
+	fm->ad = ad;
+	fm->frame = &downloaded_image;
+	fm->command = FEEDBACK_CMD_NEW_FRAME;
 
-    dlog_print(DLOG_INFO, LOG_TAG, "NEW FRAME %d", jpeg_frame_index);
+	dlog_print(DLOG_INFO, LOG_TAG, "NEW FRAME %d", jpeg_frame_index);
 
-    ecore_thread_feedback(ad->thread, fm);
+	ecore_thread_feedback(ad->thread, fm);
 }
 /**
  * @brief Curl callback for writing data
@@ -113,11 +115,9 @@ _write_callback_cb(char *ptr, size_t size, size_t nmemb, void *userdata)
 	//downloaded_image.image_size += nmemb;
 	//return nmemb;
 
-    size_t written;
-
     unsigned char *bptr = (unsigned char *)ptr;
 
-    long nbytes = size * nmemb;
+    size_t nbytes = size * nmemb;
     dlog_print(DLOG_INFO, LOG_TAG, "got %d bytes (%d, %d) (total %d)...\n", nbytes, size, nmemb, total_bytes);
 
     total_bytes += nbytes;
@@ -348,6 +348,8 @@ _download_thread_cb(void *data, Ecore_Thread *thread)
 	// Perform blocking http streaming
 	//
 	ad->downloading = true;
+	jpeg_buffer = (unsigned char *)malloc(JPEG_BUFFER_SIZE);
+
 	curl_err = curl_easy_perform(curl);
 	if (curl_err == CURLE_ABORTED_BY_CALLBACK)
 	{
@@ -366,6 +368,10 @@ _download_thread_cb(void *data, Ecore_Thread *thread)
 				curl_err);
 
 	}
+
+	free(jpeg_buffer);
+	jpeg_buffer = NULL;
+
 	_cleanup(ad);
 
 }
@@ -504,8 +510,6 @@ _image_pop_cb(void *data, Elm_Object_Item *it)
 	eext_rotary_event_handler_del(_rotary_handler_cb);
 	ad->cancel_requested = true;
 
-	free(jpeg_buffer);
-
 	return EINA_TRUE;
 }
 
@@ -544,8 +548,6 @@ create_video_view(appdata_s *ad)
 
 	system_info_get_platform_int("tizen.org/feature/screen.width", &screen_size_w);
 	system_info_get_platform_int("tizen.org/feature/screen.height", &screen_size_h);
-
-	jpeg_buffer = (unsigned char *)malloc(JPEG_BUFFER_SIZE);
 
 	scroller = elm_scroller_add(_app_naviframe);
 

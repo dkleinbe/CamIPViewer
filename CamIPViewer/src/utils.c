@@ -18,6 +18,8 @@
  test_curl_connection(const char *url, const char *proxy_address)
  {
  	CURL *curl;
+
+
  	curl = curl_easy_init();
  	if (curl)
  	{
@@ -34,6 +36,8 @@
  		}
  		curl_easy_cleanup(curl);
  	}
+ 	dlog_print(DLOG_ERROR, LOG_TAG, "test_curl_connection");
+
  	return false;
  }
 
@@ -116,12 +120,13 @@ init_curl_connection(
 {
 	CURL *curl;
 	char *proxy_address;
-
 	int conn_err = -1;
+
 	// get proxy info
 	conn_err = connection_get_proxy(connection, CONNECTION_ADDRESS_FAMILY_IPV4, &proxy_address);
 	if ( ! (conn_err == CONNECTION_ERROR_NONE && proxy_address))
 	{
+		dlog_print(DLOG_ERROR, LOG_TAG, "connection_get_proxy: CONNECTION_ERROR_NONE");
 		return false;
 	}
 	// test connection to url
@@ -132,6 +137,13 @@ init_curl_connection(
 	}
 	// curl connection
 	curl = curl_easy_init();
+	if (! curl)
+	{
+		dlog_print(DLOG_ERROR, LOG_TAG, "curl_easy_init: CURL ERROR");
+
+		return NULL;
+
+	}
 	curl_easy_setopt(curl, CURLOPT_URL, url);
 	curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address);
 	curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 6L);
