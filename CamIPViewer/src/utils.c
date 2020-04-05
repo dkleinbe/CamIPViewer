@@ -190,19 +190,39 @@ init_curl_connection(
 		void *progress_callback,
 		void *progress_data)
 {
+	static char no_proxy = 0;
 	CURL *curl;
 	CURLcode error_code;
 	char *proxy_address;
 	int conn_err = -1;
+	bool is_wifi_activated = false;
 
-	// get proxy info
-	conn_err = connection_get_proxy(connection, CONNECTION_ADDRESS_FAMILY_IPV4, &proxy_address);
-	DEBUG_ON_TARGET_POPUP("proxy: [%s]", proxy_address)
-
-	if ( ! (conn_err == CONNECTION_ERROR_NONE && proxy_address))
+	//
+	// manage proxy settings
+	//
+	int msg_level = DLOG_INFO;
+	is_wifi_activated = _is_wifi_activated();
+	if (is_wifi_activated)
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG, "connection_get_proxy: CONNECTION_ERROR_NONE");
-		return false;
+		//
+		// if wifi connection exist set NO proxy
+		//
+		proxy_address = &no_proxy;
+	}
+	else
+	{
+		//
+		// if NO wifi connection set the proxy
+		//
+		// get proxy info
+		conn_err = connection_get_proxy(connection, CONNECTION_ADDRESS_FAMILY_IPV4, &proxy_address);
+		DEBUG_ON_TARGET_POPUP("proxy: [%s]", proxy_address)
+
+		if ( ! (conn_err == CONNECTION_ERROR_NONE && proxy_address))
+		{
+			dlog_print(DLOG_ERROR, LOG_TAG, "connection_get_proxy: CONNECTION_ERROR_NONE");
+			return NULL;
+		}
 	}
 	// test connection to url
 	if (test_curl_connection(url, proxy_address) != true)
@@ -211,7 +231,7 @@ init_curl_connection(
 		connection_destroy(connection);
 		return NULL;
 	}
-	// curl connection
+	// init curl connection
 	curl = curl_easy_init();
 	if (! curl)
 	{
@@ -220,113 +240,106 @@ init_curl_connection(
 		return NULL;
 
 	}
+	// set url
 	error_code = curl_easy_setopt(curl, CURLOPT_URL, url);
 	if (error_code != CURLE_OK)
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG,
-		                   "error_code = curl_easy_setopt(curl, CURLOPT_URL, url): %s (%d)",
-		                   curl_easy_strerror(error_code), error_code);
+		msg_level = DLOG_ERROR;
 	}
-	//
-	// manage proxy settings
-	//
-	int msg_level = DLOG_INFO;
-	if (! _is_wifi_activated())
+	dlog_print(msg_level, LOG_TAG,
+	                   "error_code = curl_easy_setopt(curl, CURLOPT_URL, url): %s (%d)",
+	                   curl_easy_strerror(error_code), error_code);
+
+	// set proxy
+	error_code = curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address);
+	if (error_code != CURLE_OK)
 	{
-
-		//
-		// if NO wifi connection set the proxy
-		//
-		error_code = curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address);
-
-		if (error_code != CURLE_OK)
-		{
-			msg_level = DLOG_ERROR;
-		}
-		dlog_print(msg_level, LOG_TAG,
-				"curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address): %s (%d)",
-				curl_easy_strerror(error_code), error_code);
-
+		msg_level = DLOG_ERROR;
 	}
-	else
-	{
-		//
-		// if wifi connection exist set NO proxy
-		//
-		error_code = curl_easy_setopt(curl, CURLOPT_PROXY, "");
-		if (error_code != CURLE_OK)
-		{
-			msg_level = DLOG_ERROR;
-		}
-		dlog_print(msg_level, LOG_TAG,
-								"curl_easy_setopt(curl, CURLOPT_PROXY, NO PROXY): %s (%d)",
-								curl_easy_strerror(error_code), error_code);
-	}
-
+	dlog_print(msg_level, LOG_TAG,
+					"curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address): %s (%d)",
+					curl_easy_strerror(error_code), error_code);
+	// set timeout
 	error_code = curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 6L);
 	if (error_code != CURLE_OK)
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG,
-						   "curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 6L): %s (%d)",
-						   curl_easy_strerror(error_code), error_code);
+		msg_level = DLOG_ERROR;
 	}
+	dlog_print(msg_level, LOG_TAG,
+					   "curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 6L): %s (%d)",
+					   curl_easy_strerror(error_code), error_code);
+	// set user name
 	error_code = curl_easy_setopt(curl, CURLOPT_USERNAME, get_setting(CAM_USER));
 	if (error_code != CURLE_OK)
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG,
-						   "curl_easy_setopt(curl, CURLOPT_USERNAME, get_setting(CAM_USER)): %s (%d)",
-						   curl_easy_strerror(error_code), error_code);
+		msg_level = DLOG_ERROR;
 	}
+	dlog_print(msg_level, LOG_TAG,
+					   "curl_easy_setopt(curl, CURLOPT_USERNAME, get_setting(CAM_USER)): %s (%d)",
+					   curl_easy_strerror(error_code), error_code);
+	// set password
 	error_code = curl_easy_setopt(curl, CURLOPT_PASSWORD, get_setting(CAM_PASSWORD));
 	if (error_code != CURLE_OK)
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG,
-						   "curl_easy_setopt(curl, CURLOPT_PASSWORD, get_setting(CAM_PASSWORD)): %s (%d)",
-						   curl_easy_strerror(error_code), error_code);
+		msg_level = DLOG_ERROR;
 	}
+	dlog_print(msg_level, LOG_TAG,
+					   "curl_easy_setopt(curl, CURLOPT_PASSWORD, get_setting(CAM_PASSWORD)): %s (%d)",
+					   curl_easy_strerror(error_code), error_code);
+	// set write callback data
 	error_code = curl_easy_setopt(curl, CURLOPT_WRITEDATA, write_data);
 	if (error_code != CURLE_OK)
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG,
-						   "curl_easy_setopt(curl, CURLOPT_WRITEDATA, write_data): %s (%d)",
-						   curl_easy_strerror(error_code), error_code);
+		msg_level = DLOG_ERROR;
 	}
+	dlog_print(msg_level, LOG_TAG,
+					   "curl_easy_setopt(curl, CURLOPT_WRITEDATA, write_data): %s (%d)",
+					   curl_easy_strerror(error_code), error_code);
+	// set write callback
 	error_code = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
 	if (error_code != CURLE_OK)
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG,
-						   "curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback): %s (%d)",
-						   curl_easy_strerror(error_code), error_code);
+		msg_level = DLOG_ERROR;
 	}
+	dlog_print(msg_level, LOG_TAG,
+					   "curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback): %s (%d)",
+					   curl_easy_strerror(error_code), error_code);
+
 	if (progress_callback)
 	{
 		// Enable the built-in progress meter
 		error_code = curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
 		if (error_code != CURLE_OK)
 		{
-			dlog_print(DLOG_ERROR, LOG_TAG,
-							   "curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L): %s (%d)",
-							   curl_easy_strerror(error_code), error_code);
+			msg_level = DLOG_ERROR;
 		}
+		dlog_print(msg_level, LOG_TAG,
+						   "curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L): %s (%d)",
+						   curl_easy_strerror(error_code), error_code);
 		// Set progress callback data
 		error_code = curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progress_data);
 		if (error_code != CURLE_OK)
 		{
-			dlog_print(DLOG_ERROR, LOG_TAG,
-							   "curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progress_data): %s (%d)",
-							   curl_easy_strerror(error_code), error_code);
+			msg_level = DLOG_ERROR;
 		}
+		dlog_print(msg_level, LOG_TAG,
+						   "curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progress_data): %s (%d)",
+						   curl_easy_strerror(error_code), error_code);
 		// Set the progress callback
 		error_code = curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, progress_callback);
 		if (error_code != CURLE_OK)
 		{
-			dlog_print(DLOG_ERROR, LOG_TAG,
-							   "curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progress_callback): %s (%d)",
-							   curl_easy_strerror(error_code), error_code);
+			msg_level = DLOG_ERROR;
 		}
+		dlog_print(msg_level, LOG_TAG,
+						   "curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progress_callback): %s (%d)",
+						   curl_easy_strerror(error_code), error_code);
 	}
 
-	free(proxy_address);
+	if (! is_wifi_activated)
+	{
+		free(proxy_address);
+	}
 	return curl;
 }
 /*
