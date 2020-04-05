@@ -254,6 +254,10 @@ _app_create_cb(void *data)
 	ad->global_cleanup_needed = false;
 
 	//
+	// Init util module
+	//
+	init_utils(data);
+	//
 	// Create base UI
 	//
 	create_base_gui(ad);

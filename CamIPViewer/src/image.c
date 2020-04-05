@@ -183,7 +183,6 @@ create_image_view(appdata_s *ad)
 	//Evas_Object *circle_scroller;
 	Elm_Object_Item *nf_image;
 	char edj_path[PATH_MAX] = {0, };
-	char buf[256];
 	int ret = 0;
 	int x = -1;
 	int y = -1;

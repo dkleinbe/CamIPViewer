@@ -31,6 +31,7 @@ static inline const char *get_resource_path(const char *file_path)
 #ifdef __cplusplus
 extern "C" {
 #endif
+	void init_utils(appdata_s *data);
 	bool init_net_connection(connection_h *connection);
 	bool test_curl_connection(const char *url, const char *proxy_address);
 	CURL *init_curl_connection(connection_h connection, char *url, void *write_callback, void *write_data, void *progress_callback, void *progress_data);

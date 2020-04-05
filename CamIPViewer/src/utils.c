@@ -4,14 +4,68 @@
  *  Created on: Jan 16, 2019
  *      Author: denis
  */
-
+#include <wifi-manager.h>
 #include "settings.h"
 #include "utils.h"
 
+static appdata_s *_app_data = NULL;
+
+//#define DEBUG_ON_TARGET
+
+#ifdef DEBUG_ON_TARGET
+
+#define DEBUG_ON_TARGET_POPUP(...) _popup_msg(__VA_ARGS__);
+
+static void
+_popup_msg(const char *format, ... )
+{
+  char buffer[1024];
+  va_list args;
+  va_start (args, format);
+  vsnprintf (buffer,256,format, args);
+  popup_text_1button(_app_data, buffer);
+  va_end (args);
+}
+
+#else
+#define DEBUG_ON_TARGET_POPUP(...)
+#endif // DEBUG_ON_TARGET
 
 /*
  * Net work utils
  */
+
+/**
+ * Checks if Wifi is activated
+ * @return
+ */
+static bool
+_is_wifi_activated()
+{
+	wifi_manager_h wifi;
+	int error_code;
+	bool wifi_manager_activated = false;
+
+	error_code = wifi_manager_initialize(&wifi);
+	dlog_print(DLOG_INFO, LOG_TAG,
+							   "wifi_manager_initialize %s (%d)", curl_easy_strerror(error_code), error_code);
+
+	if (error_code == WIFI_MANAGER_ERROR_NONE )
+	{
+
+		wifi_manager_is_activated(wifi, &wifi_manager_activated);
+
+		wifi_manager_deinitialize(wifi);
+
+	}
+	if (wifi_manager_activated)
+		dlog_print(DLOG_INFO, LOG_TAG, "Success to get Wi-Fi device state.");
+	else
+		dlog_print(DLOG_INFO, LOG_TAG, "Failed to get Wi-Fi device state.");
+
+	return (wifi_manager_activated);
+
+}
 
 
  bool
@@ -66,36 +120,42 @@ init_net_connection(connection_h *connection)
  	    			break;
  	    		case CONNECTION_TYPE_WIFI:
  	    			dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_WIFI");
+ 	    			DEBUG_ON_TARGET_POPUP("CONNECTION_TYPE_WIFI")
 
  	    			internet_available = true;
 
  	    			break;
  	    		case CONNECTION_TYPE_CELLULAR:
  					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_CELLULAR");
+ 					DEBUG_ON_TARGET_POPUP("CONNECTION_TYPE_CELLULAR")
 
  	    			internet_available = true;
 
  					break;
  	    		case CONNECTION_TYPE_ETHERNET:
  					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_ETHERNET");
+ 					DEBUG_ON_TARGET_POPUP("CONNECTION_TYPE_ETHERNET")
 
  	    			internet_available = true;
 
  					break;
  	    		case CONNECTION_TYPE_BT:
  					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_BT");
+ 					DEBUG_ON_TARGET_POPUP("CONNECTION_TYPE_BT")
 
  	    			internet_available = true;
 
  					break;
  	    		case CONNECTION_TYPE_NET_PROXY:
  					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_NET_PROXY");
+ 					DEBUG_ON_TARGET_POPUP("CONNECTION_TYPE_NET_PROXY")
 
  	    			internet_available = true;
 
  					break;
  	    		default:
  	    			dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_UNKNOWN");
+ 	    			DEBUG_ON_TARGET_POPUP("CONNECTION_TYPE_UNKNOWN")
 
  	    			break;
  			}
@@ -137,6 +197,8 @@ init_curl_connection(
 
 	// get proxy info
 	conn_err = connection_get_proxy(connection, CONNECTION_ADDRESS_FAMILY_IPV4, &proxy_address);
+	DEBUG_ON_TARGET_POPUP("proxy: [%s]", proxy_address)
+
 	if ( ! (conn_err == CONNECTION_ERROR_NONE && proxy_address))
 	{
 		dlog_print(DLOG_ERROR, LOG_TAG, "connection_get_proxy: CONNECTION_ERROR_NONE");
@@ -165,13 +227,42 @@ init_curl_connection(
 		                   "error_code = curl_easy_setopt(curl, CURLOPT_URL, url): %s (%d)",
 		                   curl_easy_strerror(error_code), error_code);
 	}
-	error_code = curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address);
-	if (error_code != CURLE_OK)
+	//
+	// manage proxy settings
+	//
+	int msg_level = DLOG_INFO;
+	if (! _is_wifi_activated())
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG,
-		                   "curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address): %s (%d)",
-		                   curl_easy_strerror(error_code), error_code);
+
+		//
+		// if NO wifi connection set the proxy
+		//
+		error_code = curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address);
+
+		if (error_code != CURLE_OK)
+		{
+			msg_level = DLOG_ERROR;
+		}
+		dlog_print(msg_level, LOG_TAG,
+				"curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address): %s (%d)",
+				curl_easy_strerror(error_code), error_code);
+
 	}
+	else
+	{
+		//
+		// if wifi connection exist set NO proxy
+		//
+		error_code = curl_easy_setopt(curl, CURLOPT_PROXY, "");
+		if (error_code != CURLE_OK)
+		{
+			msg_level = DLOG_ERROR;
+		}
+		dlog_print(msg_level, LOG_TAG,
+								"curl_easy_setopt(curl, CURLOPT_PROXY, NO PROXY): %s (%d)",
+								curl_easy_strerror(error_code), error_code);
+	}
+
 	error_code = curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 6L);
 	if (error_code != CURLE_OK)
 	{
@@ -235,6 +326,7 @@ init_curl_connection(
 		}
 	}
 
+	free(proxy_address);
 	return curl;
 }
 /*
@@ -271,6 +363,17 @@ static void _response_cb(void *data, Evas_Object *obj, void *event_info)
 {
 	if(!data) return;
 	elm_popup_dismiss(data);
+}
+/**
+ * Initialize utility with application data ptr
+ * must be called before any call to utility function
+ * @param data
+ */
+void
+init_utils(appdata_s *data)
+{
+	_app_data = data;
+
 }
 
 void
