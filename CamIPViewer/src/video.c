@@ -188,12 +188,13 @@ _write_callback_cb(char *ptr, size_t size, size_t nmemb, void *userdata)
 {
 	appdata_s *ad = userdata;
 
-	dlog_print(DLOG_INFO, LOG_TAG, "data read size: %d", nmemb);
+	//dlog_print(DLOG_INFO, LOG_TAG, "data read size: %d", nmemb);
 
     unsigned char *bptr = (unsigned char *)ptr;
 
     size_t nbytes = size * nmemb;
-    dlog_print(DLOG_INFO, LOG_TAG, "got %d bytes (%d, %d) (total %d)...\n", nbytes, size, nmemb, total_bytes);
+
+    //dlog_print(DLOG_INFO, LOG_TAG, "got %d bytes (%d, %d) (total %d)...\n", nbytes, size, nmemb, total_bytes);
 
     total_bytes += nbytes;
 
