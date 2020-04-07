@@ -366,6 +366,11 @@ _download_thread_cb(void *data, Ecore_Thread *thread)
 	char url[1024];
 
 	appdata_s *ad = data;
+
+	if (eina_log_main_thread_check())
+		EINA_LOG_DBG("DOWNLOAD THREAD STARTED MAIN COUCOU");
+	else
+		EINA_LOG_DBG("DOWNLOAD THREAD STARTED COUCOU");
 	//
 	// Test net connection
 	//

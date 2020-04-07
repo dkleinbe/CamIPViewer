@@ -4,11 +4,201 @@
  *  Created on: Jan 16, 2019
  *      Author: denis
  */
+
 #include <wifi-manager.h>
+#include <storage.h>
 #include "settings.h"
 #include "utils.h"
 
 static appdata_s *_app_data = NULL;
+static int _log_dom = -1;
+static FILE *_log_fp = NULL;
+
+static bool
+_storage_info_cb(int storage_id, storage_type_e type, storage_state_e state,
+                            const char *path, void *user_data)
+{
+    int *id = (int *) user_data;
+    if (type == STORAGE_TYPE_INTERNAL) {
+        *id = storage_id;
+        return false;
+    }
+    return true;
+}
+
+static int
+_get_internal_storage_id(int *id)
+{
+    int error;
+    int found_id;
+    error = storage_foreach_device_supported(_storage_info_cb, &found_id);
+    if (error != STORAGE_ERROR_NONE) {
+        dlog_print(DLOG_ERROR, LOG_TAG, "storage_foreach_device_supported() failed: %d", error);
+        return error;
+    }
+    *id = found_id;
+    return STORAGE_ERROR_NONE;
+}
+
+static FILE *
+_open_log_file()
+{
+	int internal_storage_id = -1;
+    char write_filepath[1000] = {0,};
+    char *root_dir = NULL;
+
+
+    int error = _get_internal_storage_id(&internal_storage_id);
+	if (error != STORAGE_ERROR_NONE)
+	{
+		dlog_print(DLOG_ERROR, LOG_TAG, "Could not get internal storage ID");
+		return NULL;
+	}
+    if (storage_get_directory(internal_storage_id, STORAGE_DIRECTORY_DOWNLOADS, &root_dir) != STORAGE_ERROR_NONE)
+	{
+    	dlog_print(DLOG_ERROR, LOG_TAG, "Could not get root directory");
+    	return NULL;
+	}
+
+    snprintf(write_filepath, strlen(root_dir) + 5, "%s/%s", root_dir, "tmp");
+
+    dlog_print(DLOG_ERROR, LOG_TAG,"LOG FILE: %s", write_filepath);
+
+    free(root_dir);
+
+    _log_fp = fopen(write_filepath, "w");
+    if (_log_fp == NULL)
+    {
+    	dlog_print(DLOG_ERROR, LOG_TAG, "ERROR OPENING FILE");
+    	dlog_print(DLOG_ERROR, LOG_TAG, "fopen(): %d, errno: %d, strerror(): %s",
+    			_log_fp, errno, strerror(errno));
+    	return NULL;
+    }
+
+    if (fputs("STARTING LOG", _log_fp) == EOF)
+    {
+    	dlog_print(DLOG_ERROR, LOG_TAG, "ERROR WRITING FILE");
+    	return NULL;
+    }
+
+    return (_log_fp);
+
+#ifdef AZE
+    char *data_path = app_get_data_path(); // get the application data directory path
+
+
+    if(data_path)
+    {
+        snprintf(write_filepath, 999, "%s/%s", data_path, "log.log");
+        //free(resource_path);
+    }
+
+/*
+    _log_fp = fopen(write_filepath, "w");
+    if (_log_fp == NULL)
+    {
+    	dlog_print(DLOG_ERROR, LOG_TAG, "ERROR OPENING FILE");
+    	return NULL;
+    }
+
+    if (fputs("COUCOU", _log_fp) == EOF)
+    	dlog_print(DLOG_ERROR, LOG_TAG, "ERROR WRITING FILE");
+
+    fclose(_log_fp);
+*/
+    _log_fp = fopen(write_filepath, "r");
+
+    char str[256] = {0, };
+    fgets(str, 50, _log_fp);
+
+    if (strlen(str))
+    	dlog_print(DLOG_ERROR, LOG_TAG, "SUCCES READING FILE");
+
+    return _log_fp;
+#endif
+
+}
+static void
+_print_cb(const Eina_Log_Domain *domain,
+              Eina_Log_Level level,
+              const char *file,
+              const char *fnc,
+              int line,
+              const char *fmt,
+              void *data,
+              va_list args)
+{
+	int log_level;
+	FILE *fp = (FILE *)data;
+	const char buf[512];
+
+	switch (level)
+	{
+		case EINA_LOG_LEVEL_CRITICAL:
+			log_level = DLOG_FATAL;
+			break;
+		case EINA_LOG_LEVEL_ERR:
+			log_level = DLOG_ERROR;
+			break;
+		case EINA_LOG_LEVEL_WARN:
+			log_level = DLOG_WARN;
+			break;
+		case EINA_LOG_LEVEL_INFO:
+			log_level = DLOG_INFO;
+			break;
+		case EINA_LOG_LEVEL_DBG:
+			log_level = DLOG_DEBUG;
+			break;
+		default:
+			log_level = DLOG_VERBOSE;
+			break;
+	}
+
+	vsnprintf((char *) buf, sizeof(buf), fmt, args);
+
+	dlog_print(log_level, domain->name,
+			"%s %s:%d %s() %s",
+			domain->name,
+			file, line, fnc, buf);
+
+	if (fp)
+	{
+		fputs(buf, fp);
+		fflush(fp);
+	}
+}
+
+/**
+ * Initialize utility with application data ptr
+ * must be called before any call to utility function
+ * @param data
+ */
+void
+init_utils(appdata_s *data)
+{
+	_app_data = data;
+
+
+
+	eina_init();
+	_log_dom = eina_log_domain_register(LOG_TAG, EINA_COLOR_CYAN);
+	EINA_LOG_ERR("using my own domain");
+
+	eina_log_threads_enable();
+	eina_log_domain_level_set(LOG_TAG, EINA_LOG_LEVEL_DBG);
+	_log_fp = _open_log_file();
+	eina_log_print_cb_set(_print_cb, _log_fp);
+
+	EINA_LOG_DBG("Utilities initialized");
+
+}
+
+int
+get_log_dom(void)
+{
+	return _log_dom;
+}
+
 
 //#define DEBUG_ON_TARGET
 
@@ -377,17 +567,7 @@ static void _response_cb(void *data, Evas_Object *obj, void *event_info)
 	if(!data) return;
 	elm_popup_dismiss(data);
 }
-/**
- * Initialize utility with application data ptr
- * must be called before any call to utility function
- * @param data
- */
-void
-init_utils(appdata_s *data)
-{
-	_app_data = data;
 
-}
 
 void
 popup_text_1button(void *data, const char *txt)

@@ -11,6 +11,7 @@
         <privilege>http://tizen.org/privilege/internet</privilege>
         <privilege>http://tizen.org/privilege/externalstorage.appdata</privilege>
         <privilege>http://tizen.org/privilege/externalstorage</privilege>
+        <privilege>http://tizen.org/privilege/content.write</privilege>
     </privileges>
     <feature name="http://tizen.org/feature/network.ethernet">true</feature>
     <feature name="http://tizen.org/feature/network.internet">true</feature>

@@ -10,6 +10,12 @@
 
 
 #include "camipviewer.h"
+#include <Eina.h>
+
+#undef EINA_LOG_DOMAIN_DEFAULT
+#define EINA_LOG_DOMAIN_DEFAULT get_log_dom()
+
+
 
 #define MAX_LENGTH_PATH 1024
 
@@ -32,6 +38,7 @@ static inline const char *get_resource_path(const char *file_path)
 extern "C" {
 #endif
 	void init_utils(appdata_s *data);
+	int get_log_dom(void);
 	bool init_net_connection(connection_h *connection);
 	bool test_curl_connection(const char *url, const char *proxy_address);
 	CURL *init_curl_connection(connection_h connection, char *url, void *write_callback, void *write_data, void *progress_callback, void *progress_data);
