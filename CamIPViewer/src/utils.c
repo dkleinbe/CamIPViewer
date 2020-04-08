@@ -4,8 +4,11 @@
  *  Created on: Jan 16, 2019
  *      Author: denis
  */
+#include <unistd.h>
+#include <sys/syscall.h>
 
 #include <wifi-manager.h>
+#include <privacy_privilege_manager.h>
 #include <storage.h>
 #include "settings.h"
 #include "utils.h"
@@ -13,6 +16,58 @@
 static appdata_s *_app_data = NULL;
 static int _log_dom = -1;
 static FILE *_log_fp = NULL;
+
+static void _request_permission_cb(ppm_call_cause_e cause,
+		ppm_request_result_e result, const char *privilege, void *user_data)
+{
+	if (cause == PRIVACY_PRIVILEGE_MANAGER_CALL_CAUSE_ERROR)
+	{
+		/* Log and handle errors */
+
+		return;
+	}
+
+	switch (result)
+	{
+		case PRIVACY_PRIVILEGE_MANAGER_REQUEST_RESULT_ALLOW_FOREVER:
+			/* Update UI and start accessing protected functionality */
+			break;
+		case PRIVACY_PRIVILEGE_MANAGER_REQUEST_RESULT_DENY_FOREVER:
+			/* Show a message and terminate the application */
+			break;
+		case PRIVACY_PRIVILEGE_MANAGER_REQUEST_RESULT_DENY_ONCE:
+			/* Show a message with explanation */
+			break;
+	}
+}
+
+static bool
+_check_storage_permission()
+{
+	ppm_check_result_e result;
+	const char *privilege = "http://tizen.org/privilege/mediastorage";
+
+	int ret = ppm_check_permission(privilege, &result);
+	if (ret != PRIVACY_PRIVILEGE_MANAGER_ERROR_NONE)
+	{
+		dlog_print(DLOG_ERROR, LOG_TAG, "ERROR checking privilege");
+		return false;
+	}
+	switch (result)
+	{
+		case PRIVACY_PRIVILEGE_MANAGER_CHECK_RESULT_ALLOW:
+			return true;
+		case PRIVACY_PRIVILEGE_MANAGER_CHECK_RESULT_DENY:
+			return false;
+		case PRIVACY_PRIVILEGE_MANAGER_CHECK_RESULT_ASK:
+			ret = ppm_request_permission(privilege, _request_permission_cb, NULL);
+			return false;
+		default:
+			return false;
+
+	}
+	return false;
+}
 
 static bool
 _storage_info_cb(int storage_id, storage_type_e type, storage_state_e state,
@@ -47,6 +102,10 @@ _open_log_file()
     char write_filepath[1000] = {0,};
     char *root_dir = NULL;
 
+    if(! _check_storage_permission())
+	{
+    	return NULL;
+	}
 
     int error = _get_internal_storage_id(&internal_storage_id);
 	if (error != STORAGE_ERROR_NONE)
@@ -75,7 +134,7 @@ _open_log_file()
     	return NULL;
     }
 
-    if (fputs("STARTING LOG", _log_fp) == EOF)
+    if (fputs("STARTING LOG\n", _log_fp) == EOF)
     {
     	dlog_print(DLOG_ERROR, LOG_TAG, "ERROR WRITING FILE");
     	return NULL;
@@ -131,26 +190,34 @@ _print_cb(const Eina_Log_Domain *domain,
 	int log_level;
 	FILE *fp = (FILE *)data;
 	const char buf[512];
+	char *log_level_str[32] = { "DLOG_FATAL", "DLOG_ERROR", "DLOG_WARN",  "DLOG_INFO", "DLOG_DEBUG", "DLOG_VERBOSE"};
+	char *log_level_ptr = NULL;
 
 	switch (level)
 	{
 		case EINA_LOG_LEVEL_CRITICAL:
 			log_level = DLOG_FATAL;
+			log_level_ptr = log_level_str[0];
 			break;
 		case EINA_LOG_LEVEL_ERR:
 			log_level = DLOG_ERROR;
+			log_level_ptr = log_level_str[1];
 			break;
 		case EINA_LOG_LEVEL_WARN:
 			log_level = DLOG_WARN;
+			log_level_ptr = log_level_str[2];
 			break;
 		case EINA_LOG_LEVEL_INFO:
 			log_level = DLOG_INFO;
+			log_level_ptr = log_level_str[3];
 			break;
 		case EINA_LOG_LEVEL_DBG:
 			log_level = DLOG_DEBUG;
+			log_level_ptr = log_level_str[4];
 			break;
 		default:
 			log_level = DLOG_VERBOSE;
+			log_level_ptr = log_level_str[5];
 			break;
 	}
 
@@ -161,9 +228,23 @@ _print_cb(const Eina_Log_Domain *domain,
 			domain->name,
 			file, line, fnc, buf);
 
+
+
 	if (fp)
 	{
-		fputs(buf, fp);
+#ifdef SYS_gettid
+		pid_t tid = syscall(SYS_gettid);
+#else
+#error "SYS_gettid unavailable on this system"
+#endif
+		//fputs(buf, fp);
+		fprintf(fp,"[%s] <%d> <%d> [%s] %s:%d %s() %s\n",
+				log_level_ptr,
+				getpid(),
+				tid,
+				domain->name,
+				file, line, fnc, buf);
+
 		fflush(fp);
 	}
 }
