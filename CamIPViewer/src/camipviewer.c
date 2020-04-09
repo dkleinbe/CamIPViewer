@@ -254,10 +254,6 @@ _app_create_cb(void *data)
 	ad->global_cleanup_needed = false;
 
 	//
-	// Init util module
-	//
-	init_utils(data);
-	//
 	// Create base UI
 	//
 	create_base_gui(ad);
@@ -267,12 +263,9 @@ _app_create_cb(void *data)
     // as the function is not thread safe.
 	//
     CURLcode error_code = curl_global_init(CURL_GLOBAL_ALL);
-    if (CURLE_OK != error_code) {
-        char error_message[1024];
-        snprintf((char *)error_message, 1024, "Download Information: <br>"
-                 "cURL initialization failed: %s", curl_easy_strerror(error_code));
-
-        dlog_print(DLOG_ERROR, LOG_TAG, error_message);
+    if (CURLE_OK != error_code)
+    {
+        EINA_LOG_ERR("cURL global initialization failed: %s", curl_easy_strerror(error_code));
         return false;
     }
 
@@ -313,19 +306,21 @@ _app_terminate_cb(void *data)
     ad->exiting = true;
     ad->cancel_requested = true;
 
-    dlog_print(DLOG_DEBUG, LOG_TAG, "app_terminate(): taking lock");
+    EINA_LOG_DBG("app_terminate(): taking lock");
     eina_lock_take(&ad->mutex);
-    dlog_print(DLOG_DEBUG, LOG_TAG, "app_terminate(): lock taken");
+    EINA_LOG_DBG("app_terminate(): lock taken");
 
     if (ad->global_cleanup_needed && !ad->thread_running)
     {
         curl_global_cleanup();
         ad->global_cleanup_needed = false;
-        dlog_print(DLOG_DEBUG, LOG_TAG, "app_terminate(): curl_global_cleanup() called");
+        EINA_LOG_DBG("app_terminate(): curl_global_cleanup() called");
     }
 
-    dlog_print(DLOG_DEBUG, LOG_TAG, "app_terminate(): freeing lock");
+    EINA_LOG_DBG("app_terminate(): freeing lock");
     eina_lock_release(&ad->mutex);
+
+    utils_cleanup();
 }
 
 static void
@@ -338,7 +333,7 @@ ui_app_lang_changed(app_event_info_h event_info, void *user_data)
 
 	ret = app_event_get_language(event_info, &language);
 	if (ret != APP_ERROR_NONE) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "app_event_get_language() failed. Err = %d.", ret);
+		EINA_LOG_ERR("app_event_get_language() failed. Err = %d.", ret);
 		return;
 	}
 
@@ -379,12 +374,14 @@ main(int argc, char *argv[])
 	appdata_s ad = {0,};
 	int ret = 0;
 
+	utils_init();
+
 	memset(&ad, 0x00, sizeof(appdata_s));
 
 	ui_app_lifecycle_callback_s event_callback = {0,};
 	app_event_handler_h handlers[5] = {NULL, };
 
-	dlog_print(DLOG_INFO, LOG_TAG, "ENTERING main() PID: <%d>", getpid());
+	EINA_LOG_INFO("ENTERING main() PID: <%d>", getpid());
 
 	event_callback.create = _app_create_cb;
 	event_callback.terminate = _app_terminate_cb;
@@ -400,8 +397,10 @@ main(int argc, char *argv[])
 
 	ret = ui_app_main(argc, argv, &event_callback, &ad);
 	if (ret != APP_ERROR_NONE) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "ui_app_main() is failed. err = %d", ret);
+		EINA_LOG_ERR("ui_app_main() is failed. err = %d", ret);
 	}
+
+	utils_cleanup();
 
 	return ret;
 }

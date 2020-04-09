@@ -72,7 +72,7 @@ _on_connection_error(appdata_s *ad)
 	fm->frame = NULL;
 	fm->command = FEEDBACK_CMD_CONNECTION_ERROR;
 
-	dlog_print(DLOG_INFO, LOG_TAG, "FEEDBACK_CMD_CONNECTION_ERROR");
+	EINA_LOG_INFO("FEEDBACK_CMD_CONNECTION_ERROR");
 
 	ecore_thread_feedback(ad->thread, fm);
 }
@@ -103,7 +103,7 @@ _on_frame(unsigned char *ptr, int len, appdata_s *ad)
 	fm->frame = &downloaded_image;
 	fm->command = FEEDBACK_CMD_NEW_FRAME;
 
-	dlog_print(DLOG_INFO, LOG_TAG, "NEW FRAME %d", jpeg_frame_index);
+	EINA_LOG_INFO("NEW FRAME %d", jpeg_frame_index);
 
 	ecore_thread_feedback(ad->thread, fm);
 }
@@ -120,7 +120,7 @@ _download_feedback_cb(void *data, Ecore_Thread *thread, void *msg_data)
 {
     if (msg_data == NULL)
     {
-        dlog_print(DLOG_ERROR, LOG_TAG, "msg_data is NULL");
+    	EINA_LOG_ERR("msg_data is NULL");
         return;
     }
 
@@ -131,7 +131,7 @@ _download_feedback_cb(void *data, Ecore_Thread *thread, void *msg_data)
     {
 		case FEEDBACK_CMD_NONE:
 
-			dlog_print(DLOG_ERROR, LOG_TAG, "No command set");
+			EINA_LOG_ERR("No command set");
 			break;
 
 		case FEEDBACK_CMD_NEW_FRAME:
@@ -160,14 +160,14 @@ _progress_callback_cb(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_
 {
     if (!clientp)
     {
-        dlog_print(DLOG_ERROR, LOG_TAG, "data is NULL");
+    	EINA_LOG_ERR("data is NULL");
         return 0;
     }
 
     appdata_s *ad = (appdata_s *)clientp;
     if (ad->cancel_requested)
     {
-    	dlog_print(DLOG_DEBUG, LOG_TAG, "in progress_cb(): cancelling");
+    	EINA_LOG_DBG("in progress_cb(): cancelling");
     	ad->cancel_requested = false;
 
     	return 1;
@@ -267,7 +267,7 @@ _cleanup(appdata_s *ad)
 {
     if (ad == NULL)
     {
-        dlog_print(DLOG_ERROR, LOG_TAG, "cleanup(): ad is NULL");
+    	EINA_LOG_ERR("cleanup(): ad is NULL");
         return;
     }
 
@@ -282,9 +282,9 @@ _cleanup(appdata_s *ad)
         	free(jpeg_buffer);
     	jpeg_buffer = NULL;
 
-        dlog_print(DLOG_DEBUG, LOG_TAG, "curl_easy_cleanup(ad->curl)");
+    	EINA_LOG_DBG("curl_easy_cleanup(ad->curl)");
     } else
-        dlog_print(DLOG_DEBUG, LOG_TAG, "cleanup(): ad->curl is NULL");
+    	EINA_LOG_DBG("cleanup(): ad->curl is NULL");
 
 //    if (ad->stream) {
 //        // Close the local file
@@ -305,15 +305,15 @@ _cleanup(appdata_s *ad)
 static
 void _thread_end_cleanup(appdata_s *ad)
 {
-    dlog_print(DLOG_DEBUG, LOG_TAG, "thread_end_cleanup(): taking lock");
+	EINA_LOG_DBG("thread_end_cleanup(): taking lock");
     eina_lock_take(&ad->mutex);
-    dlog_print(DLOG_DEBUG, LOG_TAG, "thread_end_cleanup(): lock taken");
+    EINA_LOG_DBG("thread_end_cleanup(): lock taken");
 
     _cleanup(ad);
 
     ad->thread_running = false;
 
-    dlog_print(DLOG_DEBUG, LOG_TAG, "thread_end_cleanup(): freeing lock");
+    EINA_LOG_DBG("thread_end_cleanup(): freeing lock");
     eina_lock_release(&ad->mutex);
 }
 
@@ -321,10 +321,10 @@ void _thread_end_cleanup(appdata_s *ad)
 static void
 _download_thread_cancel_cb(void *data, Ecore_Thread *thread)
 {
-    dlog_print(DLOG_DEBUG, LOG_TAG, "in download_thread_cancel_cb()");
+	EINA_LOG_DBG("in download_thread_cancel_cb()");
 
     if (data == NULL) {
-        dlog_print(DLOG_ERROR, LOG_TAG, "data is NULL");
+    	EINA_LOG_ERR("data is NULL");
         return;
     }
 
@@ -340,10 +340,10 @@ _download_thread_cancel_cb(void *data, Ecore_Thread *thread)
 static void
 _download_thread_end_cb(void *data, Ecore_Thread *thread)
 {
-    dlog_print(DLOG_DEBUG, LOG_TAG, "in download_thread_end_cb()");
+	EINA_LOG_DBG("in download_thread_end_cb()");
 
     if (data == NULL) {
-        dlog_print(DLOG_ERROR, LOG_TAG, "data is NULL");
+    	EINA_LOG_ERR("data is NULL");
         return;
     }
 
@@ -376,7 +376,7 @@ _download_thread_cb(void *data, Ecore_Thread *thread)
 	//
 	if (init_net_connection(&connection) != true)
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG, "CONNECTION ERROR");
+		EINA_LOG_ERR("CONNECTION ERROR");
 		return;
 	}
 	ad->connection = connection;
@@ -391,7 +391,7 @@ _download_thread_cb(void *data, Ecore_Thread *thread)
 	ad->curl = curl;
 	if (curl == NULL)
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG, "CURL INIT ERROR");
+		EINA_LOG_ERR("CURL INIT ERROR");
 		_on_connection_error(ad);
 
 		_cleanup(ad);
@@ -406,7 +406,7 @@ _download_thread_cb(void *data, Ecore_Thread *thread)
 	curl_err = curl_easy_perform(curl);
 	if (curl_err == CURLE_ABORTED_BY_CALLBACK)
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG, "CURLE_ABORTED_BY_CALLBACK");
+		EINA_LOG_ERR("CURLE_ABORTED_BY_CALLBACK");
 
 		_cleanup(ad);
 
@@ -415,8 +415,8 @@ _download_thread_cb(void *data, Ecore_Thread *thread)
 	}
 	if (curl_err != CURLE_OK)
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG, "CURL ERROR");
-		dlog_print(DLOG_DEBUG, LOG_TAG, "curl error: %s (%d)\n",
+		EINA_LOG_ERR("CURL ERROR");
+		EINA_LOG_ERR("curl error: %s (%d)\n",
 				curl_easy_strerror(curl_err),
 				curl_err);
 
@@ -463,7 +463,7 @@ _start_video_streaming(void *data)
 
     if (ad->thread == NULL)
     {
-        dlog_print(DLOG_ERROR, LOG_TAG, "Could not create thread");
+    	EINA_LOG_ERR("Could not create thread");
         return false;
     }
     else
@@ -501,12 +501,11 @@ _rotary_handler_cb(void *data, Eext_Rotary_Event_Info *ev)
 	// get image true size
 	// FIXME: store this value somewhere do not get it every time
 	elm_image_object_size_get(image , &image_w, &image_h);
-	dlog_print(DLOG_INFO, LOG_TAG, "image clicked!, width = %d , height = %d\n", w, h);
+	EINA_LOG_INFO("image size, width = %d , height = %d\n", w, h);
 
     if (ev->direction == EEXT_ROTARY_DIRECTION_CLOCKWISE)
     {
-        dlog_print(DLOG_DEBUG, LOG_TAG,
-                   "Rotary device rotated in clockwise direction");
+    	EINA_LOG_DBG("Rotary device rotated in clockwise direction");
     	// If all ready over zoomed return
     	if (current_w >= image_w || current_h >= image_h)
     	{
@@ -516,8 +515,7 @@ _rotary_handler_cb(void *data, Eext_Rotary_Event_Info *ev)
     }
     else
     {
-        dlog_print(DLOG_DEBUG, LOG_TAG,
-                   "Rotary device rotated in counter-clockwise direction");
+    	EINA_LOG_DBG("Rotary device rotated in counter-clockwise direction");
     	// if image smaller then scroller region return
     	if (current_w < w || current_h < h)
     	{
@@ -546,7 +544,7 @@ _rotary_handler_cb(void *data, Eext_Rotary_Event_Info *ev)
 	w = (current_w > screen_size_w) ? screen_size_w : w;
 	h = (current_h > screen_size_h) ? screen_size_h : h;
 	// set scroll region
-	dlog_print(DLOG_DEBUG, LOG_TAG, "SCROLL REGION %d %d %d %d",  x, y, w, h);
+	EINA_LOG_DBG("SCROLL REGION %d %d %d %d",  x, y, w, h);
 
 	elm_scroller_region_show(scroller, x, y, w, h);
 
@@ -617,7 +615,7 @@ create_video_view(appdata_s *ad)
 	ret = elm_layout_file_set(layout, edj_path, "image_layout");
 	if (! ret)
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG, "LAYOUT SET ERROR path:<%> group:<%s>", edj_path, "image_layout");
+		EINA_LOG_ERR("LAYOUT SET ERROR path:<%s> group:<%s>", edj_path, "image_layout");
 	}
 	evas_object_size_hint_weight_set(layout, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 
@@ -636,7 +634,7 @@ create_video_view(appdata_s *ad)
 
 	elm_image_object_size_get(image_jpg, &w, &h);
 
-	dlog_print(DLOG_INFO, LOG_TAG, "IMAGE SIZE w <%d> h <%d>", w, h);
+	EINA_LOG_INFO("IMAGE SIZE w <%d> h <%d>", w, h);
 
 
 	evas_object_size_hint_min_set(layout, w, h);

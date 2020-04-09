@@ -15,6 +15,8 @@
 #undef EINA_LOG_DOMAIN_DEFAULT
 #define EINA_LOG_DOMAIN_DEFAULT get_log_dom()
 
+#define EINA_LOG_DOM_DEFAULT(level, fmt, ...) \
+  EINA_LOG(EINA_LOG_DOMAIN_DEFAULT, level, fmt, ## __VA_ARGS__)
 
 
 #define MAX_LENGTH_PATH 1024
@@ -37,7 +39,9 @@ static inline const char *get_resource_path(const char *file_path)
 #ifdef __cplusplus
 extern "C" {
 #endif
-	void init_utils(appdata_s *data);
+	void utils_init(void);
+	void utils_cleanup(void);
+	void utils_set_app_data(void);
 	int get_log_dom(void);
 	bool init_net_connection(connection_h *connection);
 	bool test_curl_connection(const char *url, const char *proxy_address);

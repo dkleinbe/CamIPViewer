@@ -13,7 +13,7 @@
 #include "settings.h"
 #include "utils.h"
 
-static appdata_s *_app_data = NULL;
+
 static int _log_dom = -1;
 static FILE *_log_fp = NULL;
 
@@ -50,7 +50,7 @@ _check_storage_permission()
 	int ret = ppm_check_permission(privilege, &result);
 	if (ret != PRIVACY_PRIVILEGE_MANAGER_ERROR_NONE)
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG, "ERROR checking privilege");
+		EINA_LOG_ERR("ERROR checking privilege");
 		return false;
 	}
 	switch (result)
@@ -74,7 +74,8 @@ _storage_info_cb(int storage_id, storage_type_e type, storage_state_e state,
                             const char *path, void *user_data)
 {
     int *id = (int *) user_data;
-    if (type == STORAGE_TYPE_INTERNAL) {
+    if (type == STORAGE_TYPE_INTERNAL)
+    {
         *id = storage_id;
         return false;
     }
@@ -87,8 +88,9 @@ _get_internal_storage_id(int *id)
     int error;
     int found_id;
     error = storage_foreach_device_supported(_storage_info_cb, &found_id);
-    if (error != STORAGE_ERROR_NONE) {
-        dlog_print(DLOG_ERROR, LOG_TAG, "storage_foreach_device_supported() failed: %d", error);
+    if (error != STORAGE_ERROR_NONE)
+    {
+    	EINA_LOG_ERR("storage_foreach_device_supported() failed: %d", error);
         return error;
     }
     *id = found_id;
@@ -100,6 +102,7 @@ _open_log_file()
 {
 	int internal_storage_id = -1;
     char write_filepath[1000] = {0,};
+    char log_file[] = "camipviewer.log";
     char *root_dir = NULL;
 
     if(! _check_storage_permission())
@@ -110,33 +113,33 @@ _open_log_file()
     int error = _get_internal_storage_id(&internal_storage_id);
 	if (error != STORAGE_ERROR_NONE)
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG, "Could not get internal storage ID");
+		EINA_LOG_ERR("Could not get internal storage ID");
 		return NULL;
 	}
     if (storage_get_directory(internal_storage_id, STORAGE_DIRECTORY_DOWNLOADS, &root_dir) != STORAGE_ERROR_NONE)
 	{
-    	dlog_print(DLOG_ERROR, LOG_TAG, "Could not get root directory");
+    	EINA_LOG_ERR("Could not get root directory");
     	return NULL;
 	}
 
-    snprintf(write_filepath, strlen(root_dir) + 5, "%s/%s", root_dir, "tmp");
+    snprintf(write_filepath, strlen(root_dir) + strlen(log_file) + 2, "%s/%s", root_dir, log_file);
 
-    dlog_print(DLOG_ERROR, LOG_TAG,"LOG FILE: %s", write_filepath);
+    EINA_LOG_INFO("LOG FILE: %s", write_filepath);
 
     free(root_dir);
 
     _log_fp = fopen(write_filepath, "w");
     if (_log_fp == NULL)
     {
-    	dlog_print(DLOG_ERROR, LOG_TAG, "ERROR OPENING FILE");
-    	dlog_print(DLOG_ERROR, LOG_TAG, "fopen(): %d, errno: %d, strerror(): %s",
-    			_log_fp, errno, strerror(errno));
+    	EINA_LOG_ERR("ERROR OPENING FILE");
+    	EINA_LOG_ERR("fopen(): %d, errno: %d, strerror(): %s",
+    			(int)_log_fp, errno, strerror(errno));
     	return NULL;
     }
 
     if (fputs("STARTING LOG\n", _log_fp) == EOF)
     {
-    	dlog_print(DLOG_ERROR, LOG_TAG, "ERROR WRITING FILE");
+    	EINA_LOG_ERR("ERROR WRITING FILE");
     	return NULL;
     }
 
@@ -223,13 +226,16 @@ _print_cb(const Eina_Log_Domain *domain,
 
 	vsnprintf((char *) buf, sizeof(buf), fmt, args);
 
+	//
+	// print to regular output
+	//
 	dlog_print(log_level, domain->name,
-			"%s %s:%d %s() %s",
-			domain->name,
+			"%s:%d %s()> %s",
 			file, line, fnc, buf);
 
-
-
+	//
+	// print to log file
+	//
 	if (fp)
 	{
 #ifdef SYS_gettid
@@ -238,7 +244,7 @@ _print_cb(const Eina_Log_Domain *domain,
 #error "SYS_gettid unavailable on this system"
 #endif
 		//fputs(buf, fp);
-		fprintf(fp,"[%s] <%d> <%d> [%s] %s:%d %s() %s\n",
+		fprintf(fp,"[%s] <%d> <%d> [%s] %s:%d %s()> %s\n",
 				log_level_ptr,
 				getpid(),
 				tid,
@@ -252,14 +258,11 @@ _print_cb(const Eina_Log_Domain *domain,
 /**
  * Initialize utility with application data ptr
  * must be called before any call to utility function
- * @param data
+ *
  */
 void
-init_utils(appdata_s *data)
+utils_init(void)
 {
-	_app_data = data;
-
-
 
 	eina_init();
 	_log_dom = eina_log_domain_register(LOG_TAG, EINA_COLOR_CYAN);
@@ -274,33 +277,24 @@ init_utils(appdata_s *data)
 
 }
 
+void
+utils_cleanup(void)
+{
+	if (_log_fp)
+	{
+		EINA_LOG_INFO("Closing log file");
+
+		fclose(_log_fp);
+		_log_fp = NULL;
+	}
+}
+
 int
 get_log_dom(void)
 {
 	return _log_dom;
 }
 
-
-//#define DEBUG_ON_TARGET
-
-#ifdef DEBUG_ON_TARGET
-
-#define DEBUG_ON_TARGET_POPUP(...) _popup_msg(__VA_ARGS__);
-
-static void
-_popup_msg(const char *format, ... )
-{
-  char buffer[1024];
-  va_list args;
-  va_start (args, format);
-  vsnprintf (buffer,256,format, args);
-  popup_text_1button(_app_data, buffer);
-  va_end (args);
-}
-
-#else
-#define DEBUG_ON_TARGET_POPUP(...)
-#endif // DEBUG_ON_TARGET
 
 /*
  * Net work utils
@@ -318,8 +312,7 @@ _is_wifi_activated()
 	bool wifi_manager_activated = false;
 
 	error_code = wifi_manager_initialize(&wifi);
-	dlog_print(DLOG_INFO, LOG_TAG,
-							   "wifi_manager_initialize %s (%d)", curl_easy_strerror(error_code), error_code);
+	EINA_LOG_INFO("wifi_manager_initialize");
 
 	if (error_code == WIFI_MANAGER_ERROR_NONE )
 	{
@@ -328,11 +321,16 @@ _is_wifi_activated()
 
 		wifi_manager_deinitialize(wifi);
 
+		if (wifi_manager_activated)
+			EINA_LOG_INFO("Wi-Fi manager activated.");
+		else
+			EINA_LOG_INFO("Wi-Fi manager NOT activated..");
 	}
-	if (wifi_manager_activated)
-		dlog_print(DLOG_INFO, LOG_TAG, "Success to get Wi-Fi device state.");
 	else
-		dlog_print(DLOG_INFO, LOG_TAG, "Failed to get Wi-Fi device state.");
+	{
+		EINA_LOG_ERR("Cant' initialize wifi manager: %s (%d)", curl_easy_strerror(error_code), error_code);
+	}
+
 
 	return (wifi_manager_activated);
 
@@ -353,7 +351,7 @@ _is_wifi_activated()
  		curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address);
  		curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 2L);
  		curl_easy_setopt(curl, CURLOPT_CONNECT_ONLY, 1L);
- 		dlog_print(DLOG_INFO, LOG_TAG, "test_curl_connection url: [%s] proxy: [%s]", url, proxy_address);
+ 		EINA_LOG_INFO("test_curl_connection url: [%s] proxy: [%s]", url, proxy_address);
  		ret = curl_easy_perform(curl);
  		if (ret == CURLE_OK)
  		{
@@ -362,7 +360,7 @@ _is_wifi_activated()
  		}
  		curl_easy_cleanup(curl);
  	}
- 	dlog_print(DLOG_ERROR, LOG_TAG, "test_curl_connection");
+ 	EINA_LOG_ERR("test_curl_connection");
 
  	return false;
  }
@@ -386,47 +384,41 @@ init_net_connection(connection_h *connection)
  	    	switch (type)
  			{
  	    		case CONNECTION_TYPE_DISCONNECTED:
- 	    			dlog_print(DLOG_ERROR, LOG_TAG, "CONNECTION_TYPE_DISCONNECTED");
+ 	    			EINA_LOG_ERR("CONNECTION_TYPE_DISCONNECTED");
 
  	    			break;
  	    		case CONNECTION_TYPE_WIFI:
- 	    			dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_WIFI");
- 	    			DEBUG_ON_TARGET_POPUP("CONNECTION_TYPE_WIFI")
+ 	    			EINA_LOG_INFO("CONNECTION_TYPE_WIFI");
 
  	    			internet_available = true;
 
  	    			break;
  	    		case CONNECTION_TYPE_CELLULAR:
- 					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_CELLULAR");
- 					DEBUG_ON_TARGET_POPUP("CONNECTION_TYPE_CELLULAR")
+ 	    			EINA_LOG_INFO("CONNECTION_TYPE_CELLULAR");
 
  	    			internet_available = true;
 
  					break;
  	    		case CONNECTION_TYPE_ETHERNET:
- 					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_ETHERNET");
- 					DEBUG_ON_TARGET_POPUP("CONNECTION_TYPE_ETHERNET")
+ 	    			EINA_LOG_INFO("CONNECTION_TYPE_ETHERNET");
 
  	    			internet_available = true;
 
  					break;
  	    		case CONNECTION_TYPE_BT:
- 					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_BT");
- 					DEBUG_ON_TARGET_POPUP("CONNECTION_TYPE_BT")
+ 	    			EINA_LOG_INFO("CONNECTION_TYPE_BT");
 
  	    			internet_available = true;
 
  					break;
  	    		case CONNECTION_TYPE_NET_PROXY:
- 					dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_NET_PROXY");
- 					DEBUG_ON_TARGET_POPUP("CONNECTION_TYPE_NET_PROXY")
+ 	    			EINA_LOG_INFO("CONNECTION_TYPE_NET_PROXY");
 
  	    			internet_available = true;
 
  					break;
  	    		default:
- 	    			dlog_print(DLOG_INFO, LOG_TAG, "CONNECTION_TYPE_UNKNOWN");
- 	    			DEBUG_ON_TARGET_POPUP("CONNECTION_TYPE_UNKNOWN")
+ 	    			EINA_LOG_INFO("CONNECTION_TYPE_UNKNOWN");
 
  	    			break;
  			}
@@ -471,7 +463,7 @@ init_curl_connection(
 	//
 	// manage proxy settings
 	//
-	int msg_level = DLOG_INFO;
+	int msg_level = EINA_LOG_LEVEL_INFO;
 	is_wifi_activated = _is_wifi_activated();
 	if (is_wifi_activated)
 	{
@@ -487,18 +479,17 @@ init_curl_connection(
 		//
 		// get proxy info
 		conn_err = connection_get_proxy(connection, CONNECTION_ADDRESS_FAMILY_IPV4, &proxy_address);
-		DEBUG_ON_TARGET_POPUP("proxy: [%s]", proxy_address)
 
 		if ( ! (conn_err == CONNECTION_ERROR_NONE && proxy_address))
 		{
-			dlog_print(DLOG_ERROR, LOG_TAG, "connection_get_proxy: CONNECTION_ERROR_NONE");
+			EINA_LOG_ERR("connection_get_proxy: CONNECTION_ERROR_NONE");
 			return NULL;
 		}
 	}
 	// test connection to url
 	if (test_curl_connection(url, proxy_address) != true)
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG, "test_curl_connection: ERROR");
+		EINA_LOG_ERR("test_curl_connection: ERROR");
 		connection_destroy(connection);
 		return NULL;
 	}
@@ -506,7 +497,7 @@ init_curl_connection(
 	curl = curl_easy_init();
 	if (! curl)
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG, "curl_easy_init: CURL ERROR");
+		EINA_LOG_ERR("curl_easy_init: CURL ERROR");
 
 		return NULL;
 
@@ -515,9 +506,9 @@ init_curl_connection(
 	error_code = curl_easy_setopt(curl, CURLOPT_URL, url);
 	if (error_code != CURLE_OK)
 	{
-		msg_level = DLOG_ERROR;
+		msg_level = EINA_LOG_LEVEL_ERR;
 	}
-	dlog_print(msg_level, LOG_TAG,
+	EINA_LOG_DOM_DEFAULT(msg_level,
 	                   "error_code = curl_easy_setopt(curl, CURLOPT_URL, url): %s (%d)",
 	                   curl_easy_strerror(error_code), error_code);
 
@@ -525,54 +516,54 @@ init_curl_connection(
 	error_code = curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address);
 	if (error_code != CURLE_OK)
 	{
-		msg_level = DLOG_ERROR;
+		msg_level = EINA_LOG_LEVEL_ERR;
 	}
-	dlog_print(msg_level, LOG_TAG,
-					"curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address): %s (%d)",
+	EINA_LOG_DOM_DEFAULT(msg_level,
+					"curl_easy_setopt(curl, CURLOPT_PROXY, <%s>): %s (%d)", proxy_address,
 					curl_easy_strerror(error_code), error_code);
 	// set timeout
 	error_code = curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 6L);
 	if (error_code != CURLE_OK)
 	{
-		msg_level = DLOG_ERROR;
+		msg_level = EINA_LOG_LEVEL_ERR;
 	}
-	dlog_print(msg_level, LOG_TAG,
+	EINA_LOG_DOM_DEFAULT(msg_level,
 					   "curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 6L): %s (%d)",
 					   curl_easy_strerror(error_code), error_code);
 	// set user name
 	error_code = curl_easy_setopt(curl, CURLOPT_USERNAME, get_setting(CAM_USER));
 	if (error_code != CURLE_OK)
 	{
-		msg_level = DLOG_ERROR;
+		msg_level = EINA_LOG_LEVEL_ERR;
 	}
-	dlog_print(msg_level, LOG_TAG,
+	EINA_LOG_DOM_DEFAULT(msg_level,
 					   "curl_easy_setopt(curl, CURLOPT_USERNAME, get_setting(CAM_USER)): %s (%d)",
 					   curl_easy_strerror(error_code), error_code);
 	// set password
 	error_code = curl_easy_setopt(curl, CURLOPT_PASSWORD, get_setting(CAM_PASSWORD));
 	if (error_code != CURLE_OK)
 	{
-		msg_level = DLOG_ERROR;
+		msg_level = EINA_LOG_LEVEL_ERR;
 	}
-	dlog_print(msg_level, LOG_TAG,
+	EINA_LOG_DOM_DEFAULT(msg_level,
 					   "curl_easy_setopt(curl, CURLOPT_PASSWORD, get_setting(CAM_PASSWORD)): %s (%d)",
 					   curl_easy_strerror(error_code), error_code);
 	// set write callback data
 	error_code = curl_easy_setopt(curl, CURLOPT_WRITEDATA, write_data);
 	if (error_code != CURLE_OK)
 	{
-		msg_level = DLOG_ERROR;
+		msg_level = EINA_LOG_LEVEL_ERR;
 	}
-	dlog_print(msg_level, LOG_TAG,
+	EINA_LOG_DOM_DEFAULT(msg_level,
 					   "curl_easy_setopt(curl, CURLOPT_WRITEDATA, write_data): %s (%d)",
 					   curl_easy_strerror(error_code), error_code);
 	// set write callback
 	error_code = curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback);
 	if (error_code != CURLE_OK)
 	{
-		msg_level = DLOG_ERROR;
+		msg_level = EINA_LOG_LEVEL_ERR;
 	}
-	dlog_print(msg_level, LOG_TAG,
+	EINA_LOG_DOM_DEFAULT(msg_level,
 					   "curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback): %s (%d)",
 					   curl_easy_strerror(error_code), error_code);
 
@@ -582,27 +573,27 @@ init_curl_connection(
 		error_code = curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
 		if (error_code != CURLE_OK)
 		{
-			msg_level = DLOG_ERROR;
+			msg_level = EINA_LOG_LEVEL_ERR;
 		}
-		dlog_print(msg_level, LOG_TAG,
+		EINA_LOG_DOM_DEFAULT(msg_level,
 						   "curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L): %s (%d)",
 						   curl_easy_strerror(error_code), error_code);
 		// Set progress callback data
 		error_code = curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progress_data);
 		if (error_code != CURLE_OK)
 		{
-			msg_level = DLOG_ERROR;
+			msg_level = EINA_LOG_LEVEL_ERR;
 		}
-		dlog_print(msg_level, LOG_TAG,
+		EINA_LOG_DOM_DEFAULT(msg_level,
 						   "curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progress_data): %s (%d)",
 						   curl_easy_strerror(error_code), error_code);
 		// Set the progress callback
 		error_code = curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, progress_callback);
 		if (error_code != CURLE_OK)
 		{
-			msg_level = DLOG_ERROR;
+			msg_level = EINA_LOG_LEVEL_ERR;
 		}
-		dlog_print(msg_level, LOG_TAG,
+		EINA_LOG_DOM_DEFAULT(msg_level,
 						   "curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progress_callback): %s (%d)",
 						   curl_easy_strerror(error_code), error_code);
 	}

@@ -41,7 +41,7 @@ static image_data_s downloaded_image;
 static size_t
 write_callback(char *ptr, size_t size, size_t nmemb, void *userdata)
 {
-	dlog_print(DLOG_INFO, LOG_TAG, "data read size: %d", nmemb);
+	EINA_LOG_INFO("data read size: %d", nmemb);
 	memcpy(downloaded_image.image_file_buf + downloaded_image.image_size, ptr, nmemb);
 	downloaded_image.image_size += nmemb;
 	return nmemb;
@@ -58,7 +58,7 @@ app_init_curl()
 
 	if (init_net_connection(&connection) != true)
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG, "CONNECTION ERROR");
+		EINA_LOG_ERR("CONNECTION ERROR");
 		return false;
 	}
 	downloaded_image.image_size = 0;
@@ -69,13 +69,13 @@ app_init_curl()
 	curl = init_curl_connection(connection, url, write_callback, NULL,NULL, NULL);
 	if (curl == NULL)
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG, "CURL INIT ERROR");
+		EINA_LOG_ERR("CURL INIT ERROR");
 		return false;
 	}
 	curl_err = curl_easy_perform(curl);
 	if (curl_err != CURLE_OK)
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG, "CURL ERROR");
+		EINA_LOG_ERR("CURL ERROR");
 		return false;
 	}
 	curl_easy_cleanup(curl);
@@ -113,12 +113,12 @@ _rotary_handler_cb(void *data, Eext_Rotary_Event_Info *ev)
 	// get image true size
 	// FIXME: store this value somewhere do not get it every time
 	elm_image_object_size_get(image , &image_w, &image_h);
-	dlog_print(DLOG_INFO, LOG_TAG, "image clicked!, width = %d , height = %d\n", w, h);
+
+	EINA_LOG_INFO("image size, width = %d , height = %d\n", w, h);
 
     if (ev->direction == EEXT_ROTARY_DIRECTION_CLOCKWISE)
     {
-        dlog_print(DLOG_DEBUG, LOG_TAG,
-                   "Rotary device rotated in clockwise direction");
+    	EINA_LOG_INFO("Rotary device rotated in clockwise direction");
     	// If all ready over zoomed return
     	if (current_w >= image_w || current_h >= image_h)
     	{
@@ -128,8 +128,7 @@ _rotary_handler_cb(void *data, Eext_Rotary_Event_Info *ev)
     }
     else
     {
-        dlog_print(DLOG_DEBUG, LOG_TAG,
-                   "Rotary device rotated in counter-clockwise direction");
+    	EINA_LOG_INFO("Rotary device rotated in counter-clockwise direction");
     	// if image smaller then scroller region return
     	if (current_w < w || current_h < h)
     	{
@@ -222,7 +221,7 @@ create_image_view(appdata_s *ad)
 	ret = elm_layout_file_set(layout, edj_path, "image_layout");
 	if (! ret)
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG, "LAYOUT SET ERROR path:<%> group:<%s>", edj_path, "image_layout");
+		EINA_LOG_ERR("LAYOUT SET ERROR path:<%s> group:<%s>", edj_path, "image_layout");
 	}
 	evas_object_size_hint_weight_set(layout, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 
@@ -236,7 +235,7 @@ create_image_view(appdata_s *ad)
 	ret = elm_image_file_set(image_jpg, buf, NULL);
 	if (! ret)
 	{
-		dlog_print(DLOG_ERROR, LOG_TAG, "elm_image_file_set ERROR image:<%> ", buf);
+		EINA_LOG_ERR("elm_image_file_set ERROR image:<%> ", buf);
 	}
 	evas_object_show(image_jpg);
 #else
@@ -260,7 +259,7 @@ create_image_view(appdata_s *ad)
 
 	elm_image_object_size_get(image_jpg, &w, &h);
 
-	dlog_print(DLOG_INFO, LOG_TAG, "IMAGE SIZE w <%d> h <%d>", w, h);
+	EINA_LOG_INFO("IMAGE SIZE w <%d> h <%d>", w, h);
 
 #ifdef MY_LAYOUT
 	evas_object_size_hint_min_set(layout, w, h);
