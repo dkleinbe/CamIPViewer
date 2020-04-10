@@ -72,15 +72,48 @@ app_init_curl()
 		EINA_LOG_ERR("CURL INIT ERROR");
 		return false;
 	}
+
+	EINA_LOG_DBG("PERFORM CURL REQUEST");
+	//
+	// perform curl request
+	//
 	curl_err = curl_easy_perform(curl);
-	if (curl_err != CURLE_OK)
+	switch (curl_err)
 	{
-		EINA_LOG_ERR("CURL ERROR");
-		return false;
+		case CURLE_OK:
+
+			EINA_LOG_DBG("END CURL REQUEST");
+
+			return true;
+
+		case CURLE_ABORTED_BY_CALLBACK:
+
+			EINA_LOG_ERR("CURLE_ABORTED_BY_CALLBACK");
+
+			return false;
+
+		case CURLE_OPERATION_TIMEDOUT:
+
+			EINA_LOG_ERR("CURLE_OPERATION_TIMEDOUT");
+
+			return false;
+
+		default:
+
+			EINA_LOG_ERR("CURLE_OPERATION ERROR");
+
+			EINA_LOG_ERR("curl error: %s (%d)\n",
+							curl_easy_strerror(curl_err),
+							curl_err);
+
+			return false;
 	}
+
+
 	curl_easy_cleanup(curl);
 	connection_unset_proxy_address_changed_cb(connection);
 	connection_destroy(connection);
+
 	return true;
 
 }

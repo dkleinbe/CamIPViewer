@@ -596,6 +596,7 @@ init_curl_connection(
 		EINA_LOG_DOM_DEFAULT(msg_level,
 						   "curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progress_callback): %s (%d)",
 						   curl_easy_strerror(error_code), error_code);
+
 	}
 
 	if (! is_wifi_activated)

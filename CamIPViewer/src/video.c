@@ -164,6 +164,8 @@ _progress_callback_cb(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_
         return 0;
     }
 
+    EINA_LOG_DBG("Progress : dltotal: %lld dlnow: %lld ultotal: %lld, ulnow: %lld", dltotal, dlnow, ultotal, ulnow);
+
     appdata_s *ad = (appdata_s *)clientp;
     if (ad->cancel_requested)
     {
@@ -403,26 +405,49 @@ _download_thread_cb(void *data, Ecore_Thread *thread)
 	ad->downloading = true;
 	jpeg_buffer = (unsigned char *)malloc(JPEG_BUFFER_SIZE);
 
+	EINA_LOG_DBG("PERFORM CURL REQUEST");
+	//
+	// perform curl request
+	//
 	curl_err = curl_easy_perform(curl);
-	if (curl_err == CURLE_ABORTED_BY_CALLBACK)
+	switch (curl_err)
 	{
-		EINA_LOG_ERR("CURLE_ABORTED_BY_CALLBACK");
+		case CURLE_OK:
 
-		_cleanup(ad);
+			EINA_LOG_DBG("END CURL REQUEST");
 
-		//reset_progress(ad);
-		return;
+			_cleanup(ad);
+
+			break;
+
+		case CURLE_ABORTED_BY_CALLBACK:
+
+			EINA_LOG_ERR("CURLE_ABORTED_BY_CALLBACK");
+
+			_cleanup(ad);
+
+			break;
+
+		case CURLE_OPERATION_TIMEDOUT:
+
+			EINA_LOG_ERR("CURLE_OPERATION_TIMEDOUT");
+
+			_cleanup(ad);
+
+			break;
+
+		default:
+
+			EINA_LOG_ERR("CURLE_OPERATION ERROR");
+
+			EINA_LOG_ERR("curl error: %s (%d)\n",
+							curl_easy_strerror(curl_err),
+							curl_err);
+
+			_cleanup(ad);
+
+			break;
 	}
-	if (curl_err != CURLE_OK)
-	{
-		EINA_LOG_ERR("CURL ERROR");
-		EINA_LOG_ERR("curl error: %s (%d)\n",
-				curl_easy_strerror(curl_err),
-				curl_err);
-
-	}
-
-	_cleanup(ad);
 
 }
 /**
@@ -557,6 +582,8 @@ static Eina_Bool
 _image_pop_cb(void *data, Elm_Object_Item *it)
 {
 	appdata_s *ad = data;
+
+	EINA_LOG_DBG("pop the video frame");
 
 	eext_rotary_event_handler_del(_rotary_handler_cb);
 	ad->cancel_requested = true;
