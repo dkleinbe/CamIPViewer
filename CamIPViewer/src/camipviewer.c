@@ -2,6 +2,7 @@
 #include "settings.h"
 #include "image.h"
 #include "video.h"
+#include "audio.h"
 #include "utils.h"
 
 static char *main_menu_names[] = {
@@ -257,6 +258,10 @@ _app_create_cb(void *data)
 	// Create base UI
 	//
 	create_base_gui(ad);
+	//
+	// create audio view
+	//
+	on_app_create_audio(ad);
 	//
     // Initialize libcurl
     // Should be done when there is only one thread running in the app,
