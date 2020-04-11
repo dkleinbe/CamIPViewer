@@ -103,7 +103,7 @@ char *data_get_image(const char *part_name)
  * If this function returns false, the application is terminated
  */
 bool
-on_app_create_audio(void *user_data)
+create_audio_view(void *user_data)
 {
 	Evas_Object *conform = NULL;
 	Evas_Object *content = NULL;
@@ -137,7 +137,7 @@ on_app_create_audio(void *user_data)
 	/*
 	 * Get EDJ file path will be used for GUI
 	 */
-	data_get_resource_path(EDJ_FILE, full_path, sizeof(full_path));
+	data_get_resource_path("edje/audioview.edj", full_path, sizeof(full_path));
 
 	/*
 	 * Create GUI for music player

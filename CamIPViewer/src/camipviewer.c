@@ -6,7 +6,7 @@
 #include "utils.h"
 
 static char *main_menu_names[] = {
-	"Settings", "Image", "Video", NULL
+	"Settings", "Image", "Video", "Audio", NULL
 };
 
 typedef struct _item_data
@@ -87,6 +87,12 @@ video_cb(void *data, Evas_Object *obj, void *event_info)
 	create_video_view(data);
 }
 
+static void
+audio_cb(void *data, Evas_Object *obj, void *event_info)
+{
+	create_audio_view(data);
+}
+
 static Eina_Bool
 naviframe_pop_cb(void *data, Elm_Object_Item *it)
 {
@@ -135,16 +141,23 @@ create_list_view(appdata_s *ad)
 	elm_genlist_item_append(genlist, ttc, NULL, NULL, ELM_GENLIST_ITEM_NONE, NULL, NULL);
 
 	/* Main Menu Items Here */
+	// settings
 	id = calloc(sizeof(item_data), 1);
 	id->index = index++;
 	id->item = elm_genlist_item_append(genlist, itc, id, NULL, ELM_GENLIST_ITEM_NONE, settings_cb, ad);
+	// image
 	id = calloc(sizeof(item_data), 1);
 	id->index = index++;
 	id->item = elm_genlist_item_append(genlist, itc, id, NULL, ELM_GENLIST_ITEM_NONE, image_cb, ad);
+	// video
 	id = calloc(sizeof(item_data), 1);
 	id->index = index++;
 	id->item = elm_genlist_item_append(genlist, itc, id, NULL, ELM_GENLIST_ITEM_NONE, video_cb, ad);
-
+	// audio
+	id = calloc(sizeof(item_data), 1);
+	id->index = index++;
+	id->item = elm_genlist_item_append(genlist, itc, id, NULL, ELM_GENLIST_ITEM_NONE, audio_cb, ad);
+	// padding
 	elm_genlist_item_append(genlist, ptc, NULL, NULL, ELM_GENLIST_ITEM_NONE, NULL, NULL);
 
 	elm_genlist_item_class_free(itc);
@@ -258,10 +271,6 @@ _app_create_cb(void *data)
 	// Create base UI
 	//
 	create_base_gui(ad);
-	//
-	// create audio view
-	//
-	on_app_create_audio(ad);
 	//
     // Initialize libcurl
     // Should be done when there is only one thread running in the app,
