@@ -1,0 +1,159 @@
+/*
+ * Copyright (c) 2015 Samsung Electronics Co., Ltd
+ *
+ * Licensed under the Flora License, Version 1.1 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://floralicense.org/license/
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+collections {
+   group { name: "main";
+      parts {
+         part { name: "sw.bg";
+            type: SWALLOW;
+            description { state: "default" 0.0;
+               rel1 { relative: 0.0 0.0; }
+               rel2 { relative: 1.0 1.0; }
+               align: 0.0 0.0;
+            }
+         }
+         part { name: "dim.bg";
+            type: RECT;
+            description { state: "default" 0.0;
+               rel1 { to: "sw.bg"; }
+               rel2 { to: "sw.bg"; }
+               color: 0 0 0 127;
+            }
+         }
+         part { name: "sw.icon.vol";
+            type: SWALLOW;
+            description { state: "default" 0.0;
+               rel1 { relative: 155/360 43/360; to: "sw.bg"; }
+               rel2 { relative: 155/360 43/360; to: "sw.bg"; }
+               align: 0.0 0.0;
+               min: 50 50;
+               max: 50 50;
+               fixed: 1 1;
+            }
+         }
+         part { name: "sw.progressbar.bg";
+            type: SWALLOW;
+            description { state: "default" 0.0;
+               rel1 { relative: 0.5 0.5; to: "sw.bg"; }
+               rel2 { relative: 0.5 0.5; to: "sw.bg"; }
+               align: 0.5 0.5;
+               min: 110 110;
+               max: 110 110;
+               fixed: 1 1;
+            }
+         }
+         part { name: "sw.progressbar";
+            type: SWALLOW;
+            description { state: "default" 0.0;
+               rel1 { to: "sw.progressbar.bg"; }
+               rel2 { to: "sw.progressbar.bg"; }
+            }
+         }
+         part { name: "sw.icon.play";
+            type: SWALLOW;
+            description { state: "default" 0.0;
+               rel1 { relative: 0.5 0.5; to: "sw.bg"; }
+               rel2 { relative: 0.5 0.5; to: "sw.bg"; }
+               align: 0.5 0.5;
+               min: 96 96;
+               max: 96 96;
+               fixed: 1 1;
+            }
+         }
+         part { name: "sw.icon.prev";
+            type: SWALLOW;
+            description { state: "default" 0.0;
+               rel1 { relative: 40/360 147/360; to: "sw.bg"; }
+               rel2 { relative: 40/360 147/360; to: "sw.bg"; }
+               align: 0.0 0.0;
+               min: 66 66;
+               max: 66 66;
+               fixed: 1 1;
+            }
+         }
+         part { name: "sw.icon.next";
+            type: SWALLOW;
+            description { state: "default" 0.0;
+               rel1 { relative: (40+66+148)/360 147/360; to: "sw.bg"; }
+               rel2 { relative: (40+66+148)/360 147/360; to: "sw.bg"; }
+               align: 0.0 0.0;
+               min: 66 66;
+               max: 66 66;
+               fixed: 1 1;
+            }
+         }
+         part { name: "sw.title.layout";
+            type: SWALLOW;
+            mouse_events: 0;
+            description { state: "default" 0.0;
+               rel1 { relative: 0.5 (43+50+141)/360; to: "sw.bg"; }
+               rel2 { relative: 0.5 (43+50+141+47)/360; to: "sw.bg"; }
+               align: 0.5 0.5;
+               fixed: 1 1;
+            }
+         }
+         part { name: "txt.artist";
+            type: TEXT;
+            mouse_events: 0;
+            description { state: "default" 0.0;
+               rel1 { relative: 66/360 (43+50+141+47)/360; to: "sw.bg"; }
+               rel2 { relative: (360-66)/360 (43+50+141+47+37)/360; to: "sw.bg"; }
+               text { font: "Tizen:style=regular"; size: 28; elipsis: 1; align: 0.5 0.5; }
+               color: 255 255 255 255;
+            }
+         }
+         part { name: "sw.more";
+            type: SWALLOW;
+            mouse_events: 1;
+            description { state: "default" 0.0;
+               rel1 { relative: 0.0 0.0; to: "sw.bg"; }
+               rel2 { relative: 1.0 1.0; to: "sw.bg"; }
+            }
+         }
+      }
+   }
+   group { name: "title-layout";
+      parts {
+         part { name: "bg";
+            type: SPACER;
+            description { state: "default" 0.0;
+               rel1 { relative: 0.0 0.0; }
+               rel2 { relative: 1.0 1.0; }
+            }
+         }
+         part { name: "sw.icon.device";
+            type: SWALLOW;
+            description { state: "default" 0.0;
+               rel1 { relative: 0.0 0.0; to: "bg"; }
+               rel2 { relative: 0.0 0.0; to: "bg"; }
+               align: 0.0 0.0;
+               min: 42 47;
+               max: 42 47;
+               fixed: 1 1;
+            }
+         }
+         part { name: "sw.title";
+            type: SWALLOW;
+            mouse_events: 0;
+            description { state: "default" 0.0;
+               rel1 { relative: 1.0 0.0; to: "sw.icon.device"; }
+               rel2 { relative: 1.0 1.0; to: "bg";}
+               align: 0.0 0.5;
+            }
+         }
+      }
+   }
+}
