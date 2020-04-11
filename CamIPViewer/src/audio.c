@@ -21,11 +21,12 @@
 #include <media_content.h>
 #include <player.h>
 #include <app.h>
-#include <dlog.h>
 #include <media_streamer.h>
+#include "utils.h"
+
 #include <view_audio.h>
 
-#include "utils.h"
+
 
 #define MEDIA_DIRECTORY "/opt/usr/media"
 #define IMG_PATH_NO_ALBUM "images/music_no_album_art.png"
@@ -87,7 +88,7 @@ char *data_get_image(const char *part_name)
 	} else if (!strcmp("sw.icon.next", part_name)) {
 		file_path = "images/Controller/music_controller_btn_next.png";
 	} else {
-		dlog_print(DLOG_ERROR, LOG_TAG, "failed to get image.");
+		EINA_LOG_ERR("failed to get image.");
 		return NULL;
 	}
 
@@ -116,7 +117,7 @@ create_audio_view(void *user_data)
 	 * Connects to the media content service
 	 */
 	if (media_content_connect() != MEDIA_CONTENT_ERROR_NONE) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "Can not connect media content.");
+		EINA_LOG_ERR("Can not connect media content.");
 		return false;
 	}
 
@@ -124,7 +125,7 @@ create_audio_view(void *user_data)
 	 * Creates a player handle for playing multimedia content
 	 */
 	if (player_create(&s_info.player) != PLAYER_ERROR_NONE) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "Can not create player handler.");
+		EINA_LOG_ERR("Can not create player handler.");
 		media_content_disconnect();
 		return false;
 	}
@@ -145,7 +146,7 @@ create_audio_view(void *user_data)
 	conform = view_get_conformant();
 	content = view_create_layout_for_conformant(conform, full_path, GRP_MAIN, _content_back_cb, NULL);
 	if (content == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "failed to create a content.");
+		EINA_LOG_ERR("failed to create a content.");
 		return NULL;
 	}
 
@@ -183,7 +184,7 @@ create_audio_view(void *user_data)
 	 * Registers a callback function to be invoked when the playback is finished
 	 */
 	if (player_set_completed_cb(s_info.player, _player_completed_cb, content) != PLAYER_ERROR_NONE) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "failed to register player state changed cb");
+		EINA_LOG_ERR("failed to register player state changed cb");
 	}
 
 	return true;
@@ -231,14 +232,14 @@ static void app_terminate(void *user_data)
 	 * Unregisters the callback function
 	 */
 	if (player_unset_completed_cb(s_info.player)) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "failed to unset completed cb");
+		EINA_LOG_ERR("failed to unset completed cb");
 	}
 
 	/*
 	 * Destroys the media player handle and releases all its resources
 	 */
 	if (player_destroy(s_info.player) != PLAYER_ERROR_NONE) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "Can not destroy player.");
+		EINA_LOG_ERR("Can not destroy player.");
 	}
 
 	//data_destroy_album_list();
@@ -248,7 +249,7 @@ static void app_terminate(void *user_data)
 	 * Disconnects from the media content service
 	 */
 	if (media_content_disconnect() != MEDIA_CONTENT_ERROR_NONE) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "Can not disconnect media content.");
+		EINA_LOG_ERR("Can not disconnect media content.");
 	}
 }
 
@@ -356,13 +357,13 @@ static void _play_current_music(const char *file_path, void *user_data)
 	int ret = 0;
 
 	if (player_get_state(s_info.player, &player_state) != PLAYER_ERROR_NONE) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "failed to get player state");
+		EINA_LOG_ERR("failed to get player state");
 		return;
 	}
 
 	if (player_state != PLAYER_STATE_IDLE) {
 		if (player_unprepare(s_info.player) != PLAYER_ERROR_NONE) {
-			dlog_print(DLOG_ERROR, LOG_TAG, "unprepare error");
+			EINA_LOG_ERR("unprepare error");
 			return;
 		}
 	}
@@ -371,18 +372,18 @@ static void _play_current_music(const char *file_path, void *user_data)
 	// http://192.168.1.22:8080/audio.wav
 
 	if (player_set_uri(s_info.player, "http://ipcam:ipc642lccost@192.168.1.22:8080/audio.wav") != PLAYER_ERROR_NONE) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "set uri error");
+		EINA_LOG_ERR("set uri error");
 		return;
 	}
 
 	player_set_streaming_user_agent(s_info.player, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36", strlen("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"));
 	if ((ret = player_prepare(s_info.player)) != PLAYER_ERROR_NONE) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "prepare error");
+		EINA_LOG_ERR("prepare error");
 		return;
 	}
 
 	if (player_start(s_info.player) != PLAYER_ERROR_NONE) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "start error");
+		EINA_LOG_ERR("start error");
 		return;
 	}
 
@@ -402,7 +403,7 @@ static void _change_play_button_image(void *user_data)
 	player_state_e player_state;
 
 	if (player_get_state(s_info.player, &player_state) != PLAYER_ERROR_NONE) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "failed to get player state");
+		EINA_LOG_ERR("failed to get player state");
 		return;
 	}
 
@@ -443,7 +444,7 @@ static void _play_btn_clicked_cb(void *user_data, Evas_Object *obj, void *event_
 	player_state_e player_state;
 
 	if (player_get_state(s_info.player, &player_state) != PLAYER_ERROR_NONE) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "failed to get player state");
+		EINA_LOG_ERR("failed to get player state");
 		return;
 	}
 
@@ -498,17 +499,17 @@ static void _content_back_cb(void *user_data, Evas_Object *obj, void *event_info
 	player_state_e player_state;
 
 	if (player_get_state(s_info.player, &player_state) != PLAYER_ERROR_NONE) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "failed to get player state");
+		EINA_LOG_ERR("failed to get player state");
 		return;
 	}
 
 	if (player_state == PLAYER_STATE_PLAYING) {
-		dlog_print(DLOG_DEBUG, LOG_TAG, "lowers the window object");
+		EINA_LOG_DBG("lowers the window object");
 		Evas_Object *win = NULL;
 		win = view_get_window();
 		elm_win_lower(win);
 	} else {
-		dlog_print(DLOG_DEBUG, LOG_TAG, "exit application");
+		EINA_LOG_DBG("exit application");
 		ui_app_exit();
 	}
 }

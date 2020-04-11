@@ -18,8 +18,8 @@
 #include <Elementary.h>
 #include <efl_extension.h>
 #include <app.h>
-#include <dlog.h>
-#include "camipviewer.h"
+#include "utils.h"
+
 #include "view_audio.h"
 
 #define LABEL_STYLE_START "<font=Tizen:style=Regular><font_size=36><align=center><color=#FAFAFA><wrap=mixed>"
@@ -59,14 +59,14 @@ void view_create(void)
 	/* Create window */
 	s_info.win = view_create_win(PACKAGE);
 	if (s_info.win == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "failed to create a window.");
+		EINA_LOG_ERR("failed to create a window.");
 		return;
 	}
 
 	/* Create conformant */
 	s_info.conform = view_create_conformant_without_indicator(s_info.win);
 	if (s_info.conform == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "failed to create a conformant");
+		EINA_LOG_ERR("failed to create a conformant");
 		return;
 	}
 
@@ -118,7 +118,7 @@ Evas_Object *view_create_conformant_without_indicator(Evas_Object *win)
 	Evas_Object *conform = NULL;
 
 	if (win == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "window is NULL.");
+		EINA_LOG_ERR("window is NULL.");
 		return NULL;
 	}
 
@@ -148,7 +148,7 @@ Evas_Object *view_create_layout_by_theme(Evas_Object *parent, const char *class_
 	Evas_Object *layout = NULL;
 
 	if (parent == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "parent is NULL.");
+		EINA_LOG_ERR("parent is NULL.");
 		return NULL;
 	}
 
@@ -184,7 +184,7 @@ void view_set_image(Evas_Object *parent, const char *part_name, const char *imag
 	Evas_Object *image = NULL;
 
 	if (parent == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "parent is NULL.");
+		EINA_LOG_ERR("parent is NULL.");
 		return;
 	}
 
@@ -192,7 +192,7 @@ void view_set_image(Evas_Object *parent, const char *part_name, const char *imag
 	if (image == NULL) {
 		image = elm_image_add(parent);
 		if (image == NULL) {
-			dlog_print(DLOG_ERROR, LOG_TAG, "failed to create an image object.");
+			EINA_LOG_ERR("failed to create an image object.");
 			return;
 		}
 
@@ -200,7 +200,7 @@ void view_set_image(Evas_Object *parent, const char *part_name, const char *imag
 	}
 
 	if (EINA_FALSE == elm_image_file_set(image, image_path, NULL)) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "failed to set image.");
+		EINA_LOG_ERR("failed to set image.");
 		return;
 	}
 
@@ -218,7 +218,7 @@ void view_set_image(Evas_Object *parent, const char *part_name, const char *imag
 void view_set_text(Evas_Object *parent, const char *part_name, const char *text)
 {
 	if (parent == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "parent is NULL.");
+		EINA_LOG_ERR("parent is NULL.");
 		return;
 	}
 
@@ -240,13 +240,13 @@ void view_set_color(Evas_Object *parent, const char *part_name, int r, int g, in
 	Evas_Object *obj = NULL;
 
 	if (parent == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "parent is NULL.");
+		EINA_LOG_ERR("parent is NULL.");
 		return;
 	}
 
 	obj = elm_object_part_content_get(parent, part_name);
 	if (obj == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "failed to get parent.");
+		EINA_LOG_ERR("failed to get parent.");
 		return;
 	}
 
@@ -268,14 +268,14 @@ void view_set_color_of_circle_object(Evas_Object *parent, const char *part_name,
 	Evas_Object *obj = NULL;
 
 	if (parent == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "parent is NULL.");
+		EINA_LOG_ERR("parent is NULL.");
 		return;
 	}
 
 	/* if the "part" is NULL, this function will get the content from "default" part */
 	obj = elm_object_part_content_get(parent, part_name);
 	if (obj == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "failed to get parent.");
+		EINA_LOG_ERR("failed to get parent.");
 		return;
 	}
 
@@ -292,7 +292,7 @@ Evas_Object *view_create_label(Evas_Object *parent)
 	Evas_Object *label = elm_label_add(parent);
 
 	if (parent == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "parent is NULL.");
+		EINA_LOG_ERR("parent is NULL.");
 		return NULL;
 	}
 
@@ -320,7 +320,7 @@ void view_set_label_text(Evas_Object *parent, const char *part_name, const char 
 	char buf[256] = { 0, };
 
 	if (parent == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "parent is NULL.");
+		EINA_LOG_ERR("parent is NULL.");
 		return;
 	}
 
@@ -330,7 +330,7 @@ void view_set_label_text(Evas_Object *parent, const char *part_name, const char 
 
 	label = elm_object_part_content_get(parent, part_name);
 	if (label == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "label is NULL.");
+		EINA_LOG_ERR("label is NULL.");
 		return;
 	}
 
@@ -347,13 +347,13 @@ void view_set_label(Evas_Object *parent, const char *part_name)
 	Evas_Object *label = NULL;
 
 	if (parent == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "parent is NULL.");
+		EINA_LOG_ERR("parent is NULL.");
 		return;
 	}
 
 	label = view_create_label(parent);
 	if (label == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "label is NULL.");
+		EINA_LOG_ERR("label is NULL.");
 		return;
 	}
 
@@ -369,7 +369,7 @@ void view_set_label(Evas_Object *parent, const char *part_name)
 void view_set_rotary_event_callback(Evas_Object *obj, Eext_Rotary_Event_Cb rotary_cb, void *user_data)
 {
 	if (obj == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "parent is NULL.");
+		EINA_LOG_ERR("parent is NULL.");
 		return;
 	}
 
@@ -388,7 +388,7 @@ Evas_Object *view_create_progressbar(Evas_Object *parent, int radius, int line_w
 	Evas_Object *progressbar = NULL;
 
 	if (parent == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "parent is NULL.");
+		EINA_LOG_ERR("parent is NULL.");
 		return NULL;
 	}
 
@@ -414,13 +414,13 @@ void view_set_progressbar(Evas_Object *parent, const char *part_name, int radius
 	Evas_Object *progressbar = NULL;
 
 	if (parent == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "parent is NULL.");
+		EINA_LOG_ERR("parent is NULL.");
 		return;
 	}
 
 	progressbar = view_create_progressbar(parent, radius, line_width);
 	if (progressbar == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "parent is NULL.");
+		EINA_LOG_ERR("parent is NULL.");
 		return;
 	}
 
@@ -438,18 +438,18 @@ void view_set_progressbar_val(Evas_Object *parent, const char *part_name, int va
 	Evas_Object *progressbar = NULL;
 
 	if (parent == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "parent is NULL.");
+		EINA_LOG_ERR("parent is NULL.");
 		return;
 	}
 
 	if (part_name == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "part is NULL.");
+		EINA_LOG_ERR("part is NULL.");
 		return;
 	}
 
 	progressbar = elm_object_part_content_get(parent, part_name);
 	if (progressbar == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "progressbar is NULL.");
+		EINA_LOG_ERR("progressbar is NULL.");
 		return;
 	}
 
@@ -474,13 +474,13 @@ void view_set_button(Evas_Object *parent, const char *part_name, const char *sty
 	Evas_Object *btn = NULL;
 
 	if (parent == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "parent is NULL.");
+		EINA_LOG_ERR("parent is NULL.");
 		return;
 	}
 
 	btn = elm_button_add(parent);
 	if (btn == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "failed to create button.");
+		EINA_LOG_ERR("failed to create button.");
 		return;
 	}
 
@@ -520,13 +520,13 @@ void view_set_more_button(Evas_Object *parent, const char *part_name, Evas_Smart
 	Evas_Object *more_btn = NULL;
 
 	if (parent == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "parent is NULL.");
+		EINA_LOG_ERR("parent is NULL.");
 		return;
 	}
 
 	more_btn = eext_more_option_add(parent);
 	if (more_btn == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "more option is NULL.");
+		EINA_LOG_ERR("more option is NULL.");
 		return;
 	}
 
@@ -554,7 +554,7 @@ void view_add_more_button_item(Evas_Object *parent, const char *part_name, const
 	Evas_Object *more_btn = NULL;
 
 	if (parent == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "parent is NULL.");
+		EINA_LOG_ERR("parent is NULL.");
 		return;
 	}
 
@@ -592,7 +592,7 @@ Evas_Object *view_create_layout(Evas_Object *parent, const char *file_path, cons
 	Evas_Object *layout = NULL;
 
 	if (parent == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "parent is NULL.");
+		EINA_LOG_ERR("parent is NULL.");
 		return NULL;
 	}
 
@@ -624,7 +624,7 @@ Evas_Object *view_create_layout_for_conformant(Evas_Object *parent, const char *
 	Evas_Object *layout = NULL;
 
 	if (parent == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "parent is NULL.");
+		EINA_LOG_ERR("parent is NULL.");
 		return NULL;
 	}
 
@@ -636,7 +636,7 @@ Evas_Object *view_create_layout_for_conformant(Evas_Object *parent, const char *
 	}
 
 	if (layout == NULL) {
-		dlog_print(DLOG_ERROR, LOG_TAG, "layout is NULL.");
+		EINA_LOG_ERR("layout is NULL.");
 		return NULL;
 	}
 
