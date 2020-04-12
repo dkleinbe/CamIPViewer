@@ -123,9 +123,10 @@ create_audio_view(void *user_data)
 	}
 
 	/*
-	 * Creates a player handle for playing multimedia content
+	 * Creates a player handle for playing multimedia content if not already created
 	 */
-	if (player_create(&s_info.player) != PLAYER_ERROR_NONE) {
+	if ((s_info.player == NULL) && (player_create(&s_info.player) != PLAYER_ERROR_NONE))
+	{
 		EINA_LOG_ERR("Can not create player handler.");
 		media_content_disconnect();
 		return false;
@@ -134,6 +135,12 @@ create_audio_view(void *user_data)
 	/*
 	 * Create basic GUI
 	 */
+	if (view_get_window() != NULL)
+	{
+		view_raise_window();
+		return true;
+	}
+
 	view_create();
 
 	/*
@@ -445,39 +452,48 @@ static void _change_play_button_image(void *user_data)
  * @param[obj]: Object that event is triggered
  * @param[event_info]: Informations regarding with event
  */
-static void _play_btn_clicked_cb(void *user_data, Evas_Object *obj, void *event_info)
+static void _play_btn_clicked_cb(void *user_data, Evas_Object *obj,
+		void *event_info)
 {
 	Evas_Object *content = user_data;
-
 
 	char *file_path = NULL;
 	player_state_e player_state;
 
-	if (player_get_state(s_info.player, &player_state) != PLAYER_ERROR_NONE) {
+	if (player_get_state(s_info.player, &player_state) != PLAYER_ERROR_NONE)
+	{
 		EINA_LOG_ERR("failed to get player state");
 		return;
 	}
 
-	switch (player_state) {
-	case PLAYER_STATE_IDLE:
-		_play_current_music(file_path, content);
-		break;
-	case PLAYER_STATE_PLAYING:
-		if (player_pause(s_info.player) != PLAYER_ERROR_NONE) {
-			return;
-		}
-		_stop_progressbar();
-		break;
-	case PLAYER_STATE_PAUSED:
-	case PLAYER_STATE_READY:
-		if (player_start(s_info.player) != PLAYER_ERROR_NONE) {
-			return;
-		}
-		_start_progressbar(content);
-		break;
-	case PLAYER_STATE_NONE:
-	default:
-		break;
+	switch (player_state)
+	{
+
+		case PLAYER_STATE_IDLE:
+			_play_current_music(file_path, content);
+			break;
+
+		case PLAYER_STATE_PLAYING:
+
+			if (player_stop(s_info.player) != PLAYER_ERROR_NONE)
+			{
+				return;
+			}
+			_stop_progressbar();
+			break;
+
+		case PLAYER_STATE_PAUSED:
+		case PLAYER_STATE_READY:
+
+			if (player_start(s_info.player) != PLAYER_ERROR_NONE)
+			{
+				return;
+			}
+			_start_progressbar(content);
+			break;
+		case PLAYER_STATE_NONE:
+		default:
+			break;
 	}
 
 	_change_play_button_image(content);
@@ -504,24 +520,21 @@ static void _player_completed_cb(void *user_data)
  * @param[obj]: Object that event is triggered
  * @param[event_info]: Informations regarding with event
  */
-static void _content_back_cb(void *user_data, Evas_Object *obj, void *event_info)
+static void _content_back_cb(void *user_data, Evas_Object *obj,
+		void *event_info)
 {
 	player_state_e player_state;
 
-	if (player_get_state(s_info.player, &player_state) != PLAYER_ERROR_NONE) {
+	if (player_get_state(s_info.player, &player_state) != PLAYER_ERROR_NONE)
+	{
 		EINA_LOG_ERR("failed to get player state");
 		return;
 	}
 
-	if (player_state == PLAYER_STATE_PLAYING) {
-		EINA_LOG_DBG("lowers the window object");
-		Evas_Object *win = NULL;
-		win = view_get_window();
-		elm_win_lower(win);
-	} else {
-		EINA_LOG_DBG("exit application");
-		ui_app_exit();
-	}
+
+	EINA_LOG_DBG("lowers the window object");
+	view_lower_window();
+
 }
 
 

@@ -43,7 +43,7 @@ App_setting _app_settings2[] = {
 		.key = "setting.cam.audio_path",
 		.name = "Audio path",
 		.input_panel_layout = ELM_INPUT_PANEL_LAYOUT_IP,
-		.guide = "audio.wav",
+		.guide = "audio.aac",
 		.value = NULL
 	},
 	{

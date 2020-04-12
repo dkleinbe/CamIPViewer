@@ -51,6 +51,19 @@ Evas_Object *view_get_conformant(void)
 	return s_info.conform;
 }
 
+void
+view_raise_window()
+{
+	elm_win_raise(s_info.win);
+}
+
+void
+view_lower_window()
+{
+	elm_win_lower(s_info.win);
+}
+
+
 /*
  * @brief: Create Essential Object window, conformant and layout
  */

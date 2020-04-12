@@ -20,6 +20,9 @@
 //#define EDJ_FILE "edje/main.edj"
 #define GRP_MAIN "main"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
 Evas_Object *view_get_window(void);
 Evas_Object *view_get_conformant(void);
 
@@ -32,6 +35,8 @@ Evas_Object *view_create_conformant_without_indicator(Evas_Object *win);
 Evas_Object *view_create_layout(Evas_Object *parent, const char *file_path, const char *group_name, Eext_Event_Cb cb_function, void *user_data);
 Evas_Object *view_create_layout_for_conformant(Evas_Object *parent, const char *file_path, const char *group_name, Eext_Event_Cb cb_function, void *user_data);
 Evas_Object *view_create_layout_by_theme(Evas_Object *parent, const char *class_name, const char *group_name, const char *style);
+void view_raise_window(void);
+void view_lower_window(void);
 void view_destroy(void);
 void view_set_image(Evas_Object *parent, const char *part_name, const char *image_path);
 void view_set_text(Evas_Object *parent, const char *part_name, const char *text);
@@ -52,5 +57,9 @@ void view_add_more_button_item(Evas_Object *parent, const char *part_name, const
 void view_music_set_title_layout(Evas_Object *parent, const char *part_name, const char *edj_path, const char *image_path, const char *title);
 void view_music_set_album_art(Evas_Object *parent, const char *part_name, const char *image_path, const char *default_image_path);
 void view_music_change_more_item(Eext_Object_Item *item, const char *main_txt, const char *sub_txt, const char *image_path);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
