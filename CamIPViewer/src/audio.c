@@ -23,6 +23,7 @@
 #include <app.h>
 #include <media_streamer.h>
 #include "utils.h"
+#include "settings.h"
 
 #include <view_audio.h>
 
@@ -354,6 +355,7 @@ static void _play_current_music(const char *file_path, void *user_data)
 {
 	Evas_Object *content = user_data;
 	player_state_e player_state;
+	char url[2048];
 	int ret = 0;
 
 	if (player_get_state(s_info.player, &player_state) != PLAYER_ERROR_NONE) {
@@ -370,9 +372,17 @@ static void _play_current_music(const char *file_path, void *user_data)
 	// http://radio666.net:8000
 	// http://100radio-albi.ice.infomaniak.ch/100radio-albi-128.mp3
 	// http://192.168.1.22:8080/audio.wav
+	// set URL to fetch
+	snprintf(url, 1023, "http://%s:%s@%s:%s/%s",
+			get_setting(CAM_USER),
+			get_setting(CAM_PASSWORD),
+			get_setting(CAM_IP), get_setting(CAM_PORT), get_setting(CAM_AUDIO));
 
-	if (player_set_uri(s_info.player, "http://ipcam:ipc642lccost@192.168.1.22:8080/audio.wav") != PLAYER_ERROR_NONE) {
-		EINA_LOG_ERR("set uri error");
+	EINA_LOG_DBG("Audio url: %s", url);
+	// "http://ipcam:ipc642lccost@192.168.1.22:8080/audio.wav"
+	if (player_set_uri(s_info.player, url) != PLAYER_ERROR_NONE)
+	{
+		EINA_LOG_ERR("set url error");
 		return;
 	}
 

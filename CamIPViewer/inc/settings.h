@@ -18,6 +18,9 @@ typedef enum _Settings_enum
 {
 	CAM_IP = 0,
 	CAM_PORT,
+	CAM_IMAGE,
+	CAM__VIDEO,
+	CAM_AUDIO,
 	CAM_USER,
 	CAM_PASSWORD,
 	NB_SETTINGS

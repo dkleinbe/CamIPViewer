@@ -385,7 +385,8 @@ _download_thread_cb(void *data, Ecore_Thread *thread)
 	downloaded_image.image_size = 0;
 
 	// set URL to fetch
-	snprintf(url, 1023, "http://%s:%s/video", get_setting(CAM_IP), get_setting(CAM_PORT));
+	snprintf(url, 1023, "http://%s:%s/%s", get_setting(CAM_IP), get_setting(CAM_PORT), get_setting(CAM__VIDEO));
+	EINA_LOG_DBG("Video url: %s", url);
 	//
 	// Init curl connection
 	//

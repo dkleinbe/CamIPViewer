@@ -26,6 +26,27 @@ App_setting _app_settings2[] = {
 		.value = NULL
 	},
 	{
+		.key = "setting.cam.image_path",
+		.name = "Image path",
+		.input_panel_layout = ELM_INPUT_PANEL_LAYOUT_IP,
+		.guide = "shot.jpg",
+		.value = NULL
+	},
+	{
+		.key = "setting.cam.video_path",
+		.name = "Video path",
+		.input_panel_layout = ELM_INPUT_PANEL_LAYOUT_IP,
+		.guide = "video",
+		.value = NULL
+	},
+	{
+		.key = "setting.cam.audio_path",
+		.name = "Audio path",
+		.input_panel_layout = ELM_INPUT_PANEL_LAYOUT_IP,
+		.guide = "audio.wav",
+		.value = NULL
+	},
+	{
 		.key = "setting.cam.user",
 		.name = "User",
 		.input_panel_layout = ELM_INPUT_PANEL_LAYOUT_NORMAL,

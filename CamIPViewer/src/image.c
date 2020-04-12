@@ -64,7 +64,9 @@ app_init_curl()
 	downloaded_image.image_size = 0;
 
 	// set URL to fetch
-	snprintf(url, 1023, "http://%s:%s/shot.jpg", get_setting(CAM_IP), get_setting(CAM_PORT));
+	snprintf(url, 1023, "http://%s:%s/%s", get_setting(CAM_IP), get_setting(CAM_PORT), get_setting(CAM_IMAGE));
+
+	EINA_LOG_DBG("Image url: %s", url);
 
 	curl = init_curl_connection(connection, url, write_callback, NULL,NULL, NULL);
 	if (curl == NULL)
