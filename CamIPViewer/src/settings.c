@@ -10,7 +10,7 @@
 #include "utils.h"
 
 
-App_setting _app_settings2[] = {
+App_setting _app_settings[] = {
 	{
 		.key = "setting.cam.ip",
 		.name = "Cam IP",
@@ -28,21 +28,21 @@ App_setting _app_settings2[] = {
 	{
 		.key = "setting.cam.image_path",
 		.name = "Image path",
-		.input_panel_layout = ELM_INPUT_PANEL_LAYOUT_IP,
+		.input_panel_layout = ELM_INPUT_PANEL_LAYOUT_NORMAL,
 		.guide = "shot.jpg",
 		.value = NULL
 	},
 	{
 		.key = "setting.cam.video_path",
 		.name = "Video path",
-		.input_panel_layout = ELM_INPUT_PANEL_LAYOUT_IP,
+		.input_panel_layout = ELM_INPUT_PANEL_LAYOUT_NORMAL,
 		.guide = "video",
 		.value = NULL
 	},
 	{
 		.key = "setting.cam.audio_path",
 		.name = "Audio path",
-		.input_panel_layout = ELM_INPUT_PANEL_LAYOUT_IP,
+		.input_panel_layout = ELM_INPUT_PANEL_LAYOUT_NORMAL,
 		.guide = "audio.aac",
 		.value = NULL
 	},
@@ -101,12 +101,16 @@ _gl_main_text_get(void *data, Evas_Object *obj, const char *part)
 
 	if (!strcmp(part, "elm.text"))
 	{
-		return strdup(_app_settings2[index].name);
+		return strdup(_app_settings[index].name);
 	}
-	if (!strcmp(part, "elm.text.1") && _app_settings2[index].value)
+	if (!strcmp(part, "elm.text.1") && _app_settings[index].value)
 	{
 		char buf[1024];
-		sprintf(buf,"<color=#FF0000FF>%s</color>", _app_settings2[index].value);
+
+		if (_app_settings[index].input_panel_layout == ELM_INPUT_PANEL_LAYOUT_PASSWORD)
+			sprintf(buf,"<color=#FF0000FF>%s</color>", "******");
+		else
+			sprintf(buf,"<color=#FF0000FF>%s</color>", _app_settings[index].value);
 		return strdup(buf);
 		//return strdup(_app_settings2[index].value);
 	}
@@ -144,25 +148,29 @@ _setting_finished_cb(void *data, Elm_Object_Item *it)
 }
 
 static bool
-load_setting(int index)
+_load_setting(int index)
 {
 	bool is_existing = false;
 	char *value;
 
-	preference_is_existing(_app_settings2[index].key, &is_existing);
+	preference_is_existing(_app_settings[index].key, &is_existing);
 	if (is_existing)
 	{
-		preference_get_string(_app_settings2[index].key, &value);
-		if (_app_settings2[index].value != NULL)
+		preference_get_string(_app_settings[index].key, &value);
+		if (_app_settings[index].value != NULL)
 		{
-			free(_app_settings2[index].value);
+			free(_app_settings[index].value);
 		}
-		_app_settings2[index].value = value;
+		_app_settings[index].value = value;
 		return true;
 	}
 	else
 	{
-		_app_settings2[index].value = NULL;
+		_app_settings[index].value = NULL;
+		if (_app_settings[index].guide != NULL)
+		{
+			_app_settings[index].value = strdup(_app_settings[index].guide);
+		}
 		return false;
 	}
 
@@ -183,9 +191,9 @@ _entry_setting_enter_click(void *data, Evas_Object *obj, void *event_info)
 
 	const char *txt = elm_entry_entry_get(obj);
 
-	preference_set_string(_app_settings2[setting_index].key, txt);
+	preference_set_string(_app_settings[setting_index].key, txt);
 	/* reload setting */
-	load_setting(setting_index);
+	_load_setting(setting_index);
 	elm_genlist_item_fields_update(id->item, "elm.text.1", ELM_GENLIST_ITEM_FIELD_TEXT);
 
 	elm_naviframe_item_pop(_app_naviframe);
@@ -255,13 +263,16 @@ _setting_item_cb(void *data, Evas_Object *obj, void *event_info EINA_UNUSED)
 	limit_filter_data.max_char_count = 0;
 	limit_filter_data.max_byte_count = 100;
 	elm_entry_markup_filter_append(entry, elm_entry_filter_limit_size, &limit_filter_data);
-	elm_entry_input_panel_layout_set(entry, _app_settings2[setting_index].input_panel_layout);
+	elm_entry_input_panel_layout_set(entry, _app_settings[setting_index].input_panel_layout);
+	if (_app_settings[setting_index].input_panel_layout == ELM_INPUT_PANEL_LAYOUT_PASSWORD)
+		elm_entry_password_set(entry, true);
+
 	elm_entry_input_panel_return_key_type_set(entry, ELM_INPUT_PANEL_RETURN_KEY_TYPE_DONE);
 
-	elm_object_part_text_set(entry, "elm.guide", _app_settings2[setting_index].guide);
-	elm_entry_cursor_end_set(entry);
+	elm_object_part_text_set(entry, "elm.guide", _app_settings[setting_index].guide);
 
-	elm_entry_entry_set(entry, _app_settings2[setting_index].value);
+	elm_entry_entry_set(entry, _app_settings[setting_index].value);
+	elm_entry_cursor_end_set(entry);
 
 	evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 	evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
@@ -325,7 +336,7 @@ create_settings_list_view(appdata_s *ad)
 		/*
 		 * load setting
 		 */
-		load_setting(index);
+		_load_setting(index);
 
 		id = calloc(sizeof(item_data), 1);
 		id->index = index;
@@ -347,13 +358,13 @@ const char *
 get_setting(int index)
 {
 
-	if (_app_settings2[index].value != NULL)
+	if (_app_settings[index].value != NULL)
 	{
-		return _app_settings2[index].value;
+		return _app_settings[index].value;
 	}
 	else
 	{
-		return _app_settings2[index].guide;
+		return _app_settings[index].guide;
 	}
 
 	return NULL;
