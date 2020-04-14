@@ -45,11 +45,13 @@ static void _btn_up_cb(void *user_data, Evas *e, Evas_Object *obj, void *event_i
 static Eina_Bool _progressbar_timer_cb(void *user_data);
 static void _start_progressbar(void *user_data);
 static void _stop_progressbar(void);
-static void _play_current_music(const char *file_path, void *user_data);
+static bool _play_current_music(const char *file_path, void *user_data);
 static void _change_play_button_image(void *user_data);
 static void _play_btn_clicked_cb(void *user_data, Evas_Object *obj, void *event_info);
 static void _player_completed_cb(void *user_data);
 static void _content_back_cb(void *user_data, Evas_Object *obj, void *event_info);
+
+static int _progress = 0;
 
 /*
  * @brief: Get path of resource
@@ -308,12 +310,15 @@ static void _btn_up_cb(void *data, Evas *e, Evas_Object *obj, void *event_info)
  * @brief: Function to update progressbar value
  * @param[user_data]: Data to pass to function when it is called
  */
+
+
 static Eina_Bool _progressbar_timer_cb(void *user_data)
 {
 	Evas_Object *content = user_data;
 	double ratio = 0;
 	int dur_msec = 0, pos_msec = 0;
 
+	// FIXME: remove this useless code
 	player_get_duration(s_info.player, &dur_msec);
 	player_get_play_position(s_info.player, &pos_msec);
 	ratio = ((double) pos_msec / dur_msec) * 100;
@@ -321,8 +326,10 @@ static Eina_Bool _progressbar_timer_cb(void *user_data)
 		s_info.timer_progressbar = NULL;
 		return ECORE_CALLBACK_CANCEL;
 	}
+	// END FIX
 
-	view_set_progressbar_val(content, "sw.progressbar", ratio);
+	_progress  = ++_progress % 100;
+	view_set_progressbar_val(content, "sw.progressbar", _progress);
 
 	return ECORE_CALLBACK_RENEW;
 }
@@ -334,6 +341,8 @@ static Eina_Bool _progressbar_timer_cb(void *user_data)
 static void _start_progressbar(void *user_data)
 {
 	Evas_Object *content = user_data;
+
+	_progress = 0;
 
 	if (s_info.timer_progressbar) {
 		ecore_timer_del(s_info.timer_progressbar);
@@ -347,6 +356,7 @@ static void _start_progressbar(void *user_data)
  */
 static void _stop_progressbar(void)
 {
+	_progress = 0;
 	if (s_info.timer_progressbar) {
 		ecore_timer_del(s_info.timer_progressbar);
 		s_info.timer_progressbar = NULL;
@@ -358,53 +368,63 @@ static void _stop_progressbar(void)
  * @param[file_path]: File path of music
  * @param[user_data]: Data to pass to function when it is called
  */
-static void _play_current_music(const char *file_path, void *user_data)
+static bool
+_play_current_music(const char *file_path, void *user_data)
 {
 	Evas_Object *content = user_data;
 	player_state_e player_state;
 	char url[2048];
 	int ret = 0;
 
-	if (player_get_state(s_info.player, &player_state) != PLAYER_ERROR_NONE) {
+	if (player_get_state(s_info.player, &player_state) != PLAYER_ERROR_NONE)
+	{
 		EINA_LOG_ERR("failed to get player state");
-		return;
+		return false;
 	}
 
-	if (player_state != PLAYER_STATE_IDLE) {
-		if (player_unprepare(s_info.player) != PLAYER_ERROR_NONE) {
+	if (player_state != PLAYER_STATE_IDLE)
+	{
+		if (player_unprepare(s_info.player) != PLAYER_ERROR_NONE)
+		{
 			EINA_LOG_ERR("unprepare error");
-			return;
+			return false;
 		}
 	}
 	// http://radio666.net:8000
 	// http://100radio-albi.ice.infomaniak.ch/100radio-albi-128.mp3
 	// http://192.168.1.22:8080/audio.wav
 	// set URL to fetch
-	snprintf(url, 1023, "http://%s:%s@%s:%s/%s",
-			get_setting(CAM_USER),
-			get_setting(CAM_PASSWORD),
-			get_setting(CAM_IP), get_setting(CAM_PORT), get_setting(CAM_AUDIO));
+	snprintf(url, 1023, "http://%s:%s@%s:%s/%s", get_setting(CAM_USER),
+			get_setting(CAM_PASSWORD), get_setting(CAM_IP),
+			get_setting(CAM_PORT), get_setting(CAM_AUDIO));
 
 	EINA_LOG_DBG("Audio url: %s", url);
 	// "http://ipcam:ipc642lccost@192.168.1.22:8080/audio.wav"
 	if (player_set_uri(s_info.player, url) != PLAYER_ERROR_NONE)
 	{
 		EINA_LOG_ERR("set url error");
-		return;
+		return false;
 	}
 
-	player_set_streaming_user_agent(s_info.player, "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36", strlen("Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"));
-	if ((ret = player_prepare(s_info.player)) != PLAYER_ERROR_NONE) {
+	player_set_streaming_user_agent(s_info.player,
+			"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36",
+			strlen(
+					"Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/74.0.3729.169 Safari/537.36"));
+	if ((ret = player_prepare(s_info.player)) != PLAYER_ERROR_NONE)
+	{
 		EINA_LOG_ERR("prepare error");
-		return;
+		return false;
 	}
 
-	if (player_start(s_info.player) != PLAYER_ERROR_NONE) {
+	if (player_start(s_info.player) != PLAYER_ERROR_NONE)
+	{
 		EINA_LOG_ERR("start error");
-		return;
+		return false;
 	}
 
 	_start_progressbar(content);
+
+	return true;
 }
 
 /*
@@ -470,7 +490,17 @@ static void _play_btn_clicked_cb(void *user_data, Evas_Object *obj,
 	{
 
 		case PLAYER_STATE_IDLE:
-			_play_current_music(file_path, content);
+
+			_start_progressbar(content);
+			if (! _play_current_music(file_path, content))
+			{
+				//popup_text_1button(ad, "Can\'t get image :("));
+				_stop_progressbar();
+
+				_change_play_button_image(PLAYER_STATE_NONE);
+
+				return;
+			}
 			break;
 
 		case PLAYER_STATE_PLAYING:
