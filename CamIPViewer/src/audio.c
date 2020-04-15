@@ -201,86 +201,6 @@ create_audio_view(void *user_data)
 }
 
 
-
-/*
- * @brief: This callback function is called when another application
- * sends the launch request to the application
- */
-static void app_control(app_control_h app_control, void *user_data)
-{
-	/* Handle the launch request. */
-}
-
-/*
- * @brief: This callback function is called each time
- * the application is completely obscured by another application
- * and becomes invisible to the user
- */
-static void app_pause(void *user_data)
-{
-	/* Take necessary actions when application becomes invisible. */
-}
-
-/*
- * @brief: This callback function is called each time
- * the application becomes visible to the user
- */
-static void app_resume(void *user_data)
-{
-	/* Take necessary actions when application becomes visible. */
-}
-
-/*
- * @brief: This callback function is called once after the main loop of the application exits
- */
-static void app_terminate(void *user_data)
-{
-	/* Release all resources. */
-
-
-	/*
-	 * Unregisters the callback function
-	 */
-	if (player_unset_completed_cb(s_info.player)) {
-		EINA_LOG_ERR("failed to unset completed cb");
-	}
-
-	/*
-	 * Destroys the media player handle and releases all its resources
-	 */
-	if (player_destroy(s_info.player) != PLAYER_ERROR_NONE) {
-		EINA_LOG_ERR("Can not destroy player.");
-	}
-
-	//data_destroy_album_list();
-	view_destroy();
-
-	/*
-	 * Disconnects from the media content service
-	 */
-	if (media_content_disconnect() != MEDIA_CONTENT_ERROR_NONE) {
-		EINA_LOG_ERR("Can not disconnect media content.");
-	}
-}
-
-/*
- * @brief: This function will be called when the language is changed
- */
-static void ui_app_lang_changed(app_event_info_h event_info, void *user_data)
-{
-	/*APP_EVENT_LANGUAGE_CHANGED*/
-	char *locale = NULL;
-
-	system_settings_get_value_string(SYSTEM_SETTINGS_KEY_LOCALE_LANGUAGE, &locale);
-
-	if (locale != NULL) {
-		elm_language_set(locale);
-		free(locale);
-	}
-	return;
-}
-
-
 /*
  * @brief: The function operated on button down
  * @param[user_data]: Data to pass to function when it is called
@@ -328,7 +248,7 @@ static Eina_Bool _progressbar_timer_cb(void *user_data)
 	}
 	// END FIX
 
-	_progress  = ++_progress % 100;
+	_progress = _progress % 100;
 	view_set_progressbar_val(content, "sw.progressbar", _progress);
 
 	return ECORE_CALLBACK_RENEW;
@@ -497,7 +417,7 @@ static void _play_btn_clicked_cb(void *user_data, Evas_Object *obj,
 				//popup_text_1button(ad, "Can\'t get image :("));
 				_stop_progressbar();
 
-				_change_play_button_image(PLAYER_STATE_NONE);
+				_change_play_button_image((void *)PLAYER_STATE_NONE);
 
 				return;
 			}
@@ -537,7 +457,7 @@ static void _play_btn_clicked_cb(void *user_data, Evas_Object *obj,
  */
 static void _player_completed_cb(void *user_data)
 {
-	Evas_Object *content = user_data;
+	//Evas_Object *content = user_data;
 
 	//_next_btn_clicked_cb(content, NULL, NULL);
 
