@@ -15,10 +15,11 @@
 
 #define IMAGE_WIDTH 1024
 #define IMAGE_HEIGHT 768
-#define BUF_SIZE IMAGE_WIDTH * IMAGE_HEIGHT * 5
+
+#define JPEG_BUFFER_SIZE IMAGE_WIDTH * IMAGE_HEIGHT * 5
 
 typedef struct image_data {
-	char image_file_buf[BUF_SIZE];
+	char image_file_buf[JPEG_BUFFER_SIZE];
 	size_t image_size;
 } image_data_s;
 
@@ -36,13 +37,14 @@ typedef enum feedback_cmd_e {
 
 // Message structure, which holds the command and its details.
 typedef struct feedback_msg_s {
-    appdata_s *ad;
-    feedback_cmd_e command;
-    image_data_s *frame;
-    Evas_Object *object;
-    char *string;
-    double double_value;
-    Eina_Bool eina_bool_value;
+    appdata_s      *ad;
+    feedback_cmd_e  command;
+    image_data_s   *frame;
+    int             frame_id;
+    Evas_Object    *object;
+    char           *string;
+    double          double_value;
+    Eina_Bool       eina_bool_value;
 } feedback_msg_s;
 
 

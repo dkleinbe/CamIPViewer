@@ -18,10 +18,6 @@
 #define STATE_MAIN_HEADER 30
 #define STATE_FRAME_HEADER 36
 
-#define JPEG_BUFFER_SIZE 5*1024*1024
-
-
-
 static Evas_Object *_app_naviframe;
 /* FIXME: move to a structure */
 static appdata_s *_appdata;
@@ -30,7 +26,7 @@ static Evas_Object *layout;
 static int screen_size_w = 0;
 static int screen_size_h = 0;
 
-static image_data_s downloaded_image;
+static image_data_s _downloaded_image;
 
 static int g_state = STATE_MAIN_HEADER;
 static int jpeg_frame_size = 0;
@@ -46,6 +42,7 @@ static char headerline[1000] = { 0, };
 
 
 static long total_bytes = 0;
+static Elm_Image_Orient _orient = 0;
 
 /**
  * @brief get http header
@@ -93,15 +90,16 @@ _on_frame(unsigned char *ptr, int len, appdata_s *ad)
 		//decode_into_current(ptr, len);
 		//current_callback(bmp);
 	}
-	memcpy(downloaded_image.image_file_buf, ptr, len);
-	downloaded_image.image_size = len;
+	memcpy(_downloaded_image.image_file_buf, ptr, len);
+	_downloaded_image.image_size = len;
 
 	jpeg_frame_index++;
 
 	feedback_msg_s *fm = malloc(sizeof(feedback_msg_s));
 
 	fm->ad = ad;
-	fm->frame = &downloaded_image;
+	fm->frame = &_downloaded_image;
+	fm->frame_id = jpeg_frame_index;
 	fm->command = FEEDBACK_CMD_NEW_FRAME;
 
 	EINA_LOG_INFO("NEW FRAME %d", jpeg_frame_index);
@@ -119,6 +117,7 @@ _on_frame(unsigned char *ptr, int len, appdata_s *ad)
 static void
 _download_feedback_cb(void *data, Ecore_Thread *thread, void *msg_data)
 {
+
     if (msg_data == NULL)
     {
     	EINA_LOG_ERR("msg_data is NULL");
@@ -137,11 +136,21 @@ _download_feedback_cb(void *data, Ecore_Thread *thread, void *msg_data)
 
 		case FEEDBACK_CMD_NEW_FRAME:
 
+			EINA_LOG_INFO("NEW FRAME DISPLAY %d", fm->frame_id);
+
+			// reset orientation
+			elm_image_orient_set(ad->image_jpg , ELM_IMAGE_ORIENT_NONE);
+
+
 			elm_image_memfile_set(
 					ad->image_jpg,
 					&fm->frame->image_file_buf,
 					fm->frame->image_size,
 					"jpg", NULL);
+
+			// set current orientation
+			elm_image_orient_set(ad->image_jpg , _orient);
+
 			break;
 
 		case FEEDBACK_CMD_CONNECTION_ERROR:
@@ -300,7 +309,7 @@ _cleanup(appdata_s *ad)
 
     ad->cleanup_done = true;
     ad->downloading = false;
-    downloaded_image.image_size = 0;
+    _downloaded_image.image_size = 0;
 
 
 }
@@ -383,7 +392,7 @@ _download_thread_cb(void *data, Ecore_Thread *thread)
 		return;
 	}
 	ad->connection = connection;
-	downloaded_image.image_size = 0;
+	_downloaded_image.image_size = 0;
 
 	// set URL to fetch
 	snprintf(url, 1023, "http://%s:%s/%s", get_setting(CAM_IP), get_setting(CAM_PORT), get_setting(CAM__VIDEO));
@@ -517,9 +526,6 @@ _rotary_handler_cb(void *data, Eext_Rotary_Event_Info *ev)
 	int current_w = 0;
 	int current_h = 0;
 
-
-	//elm_image_orient_set(image , orient);
-
 	// get displayed image size
 	evas_object_size_hint_min_get(image, &current_w, &current_h);
 	// get visible region
@@ -578,6 +584,17 @@ _rotary_handler_cb(void *data, Eext_Rotary_Event_Info *ev)
 	evas_object_show(image);
 
 	return EINA_FALSE;
+}
+
+static void
+_image_clicked_cb(void *data, Evas_Object *obj, void *event_info)
+{
+
+	_orient++;
+	_orient = _orient % 4;
+
+	EINA_LOG_DBG("Image orientation: %d", _orient);
+
 }
 
 static Eina_Bool
@@ -688,7 +705,9 @@ create_video_view(appdata_s *ad)
 
 	elm_scroller_region_show(scroller, x, y, w, h);
 
-	//evas_object_smart_callback_add(image_jpg, "clicked", _image_clicked_cb , image_jpg);
+	// add rotation callback
+	evas_object_smart_callback_add(image_jpg, "clicked", _image_clicked_cb , image_jpg);
+	// add zoom callback
 	eext_rotary_event_handler_add(_rotary_handler_cb, image_jpg);
 
 	nf_image = elm_naviframe_item_push(_app_naviframe, NULL, NULL, NULL, scroller, "empty");
