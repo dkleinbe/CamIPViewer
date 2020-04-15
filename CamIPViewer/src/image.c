@@ -39,7 +39,7 @@ static image_data_s downloaded_image;
 
 
 static size_t
-write_callback(char *ptr, size_t size, size_t nmemb, void *userdata)
+_write_callback(char *ptr, size_t size, size_t nmemb, void *userdata)
 {
 	EINA_LOG_INFO("data read size: %d", nmemb);
 	memcpy(downloaded_image.image_file_buf + downloaded_image.image_size, ptr, nmemb);
@@ -49,7 +49,7 @@ write_callback(char *ptr, size_t size, size_t nmemb, void *userdata)
 
 
 static bool
-app_init_curl()
+_app_init_curl()
 {
 	CURL *curl;
 	CURLcode curl_err;
@@ -68,7 +68,7 @@ app_init_curl()
 
 	EINA_LOG_DBG("Image url: %s", url);
 
-	curl = init_curl_connection(connection, url, write_callback, NULL,NULL, NULL);
+	curl = init_curl_connection(connection, url, _write_callback, NULL,NULL, NULL);
 	if (curl == NULL)
 	{
 		EINA_LOG_ERR("CURL INIT ERROR");
@@ -138,8 +138,6 @@ _rotary_handler_cb(void *data, Eext_Rotary_Event_Info *ev)
 	int current_h = 0;
 
 
-	//elm_image_orient_set(image , orient);
-
 	// get displayed image size
 	evas_object_size_hint_min_get(image, &current_w, &current_h);
 	// get visible region
@@ -199,6 +197,23 @@ _rotary_handler_cb(void *data, Eext_Rotary_Event_Info *ev)
 	return EINA_FALSE;
 }
 
+static void
+_image_clicked_cb(void *data, Evas_Object *obj, void *event_info)
+{
+	Evas_Object *image = (Evas_Object *)data;
+	Elm_Image_Orient orient;
+
+	orient = elm_image_orient_get(image);
+	// cycle through orientation by 90 deg steps
+	orient++;
+	orient = orient % 4;
+
+	EINA_LOG_DBG("Image orientation: %d", orient);
+
+	elm_image_orient_set(image , orient);
+
+}
+
 static Eina_Bool
 _image_pop_cb(void *data, Elm_Object_Item *it)
 {
@@ -230,7 +245,7 @@ create_image_view(appdata_s *ad)
 	system_info_get_platform_int("tizen.org/feature/screen.height", &screen_size_h);
 
 #ifndef MY_TEST
-	if (! app_init_curl())
+	if (! _app_init_curl())
 	{
 		popup_text_1button(ad, "Can\'t get image :(");
 		return;
@@ -315,8 +330,9 @@ create_image_view(appdata_s *ad)
 #endif /* MY_LAYOUT */
 
 	elm_scroller_region_show(scroller, x, y, w, h);
-
-	//evas_object_smart_callback_add(image_jpg, "clicked", _image_clicked_cb , image_jpg);
+	// add rotation callback
+	evas_object_smart_callback_add(image_jpg, "clicked", _image_clicked_cb , image_jpg);
+	// add zoom callback
 	eext_rotary_event_handler_add(_rotary_handler_cb, image_jpg);
 
 	nf_image = elm_naviframe_item_push(_app_naviframe, NULL, NULL, NULL, scroller, "empty");
