@@ -8,6 +8,7 @@
 
 #include <system_info.h>
 #include <player.h>
+#include <efl_util.h>
 
 #include "utils.h"
 #include "settings.h"
@@ -586,6 +587,10 @@ _image_pop_cb(void *data, Elm_Object_Item *it)
 
 	EINA_LOG_DBG("pop the video frame");
 
+	if (efl_util_set_window_screen_mode(ad->win, EFL_UTIL_SCREEN_MODE_DEFAULT) != EFL_UTIL_ERROR_NONE)
+	{
+		EINA_LOG_ERR("Can't set screen in default on mode");
+	}
 	eext_rotary_event_handler_del(_rotary_handler_cb);
 	ad->cancel_requested = true;
 
@@ -688,6 +693,11 @@ create_video_view(appdata_s *ad)
 
 	nf_image = elm_naviframe_item_push(_app_naviframe, NULL, NULL, NULL, scroller, "empty");
 	elm_naviframe_item_pop_cb_set(nf_image, _image_pop_cb, ad);
+
+	if (efl_util_set_window_screen_mode(ad->win, EFL_UTIL_SCREEN_MODE_ALWAYS_ON) != EFL_UTIL_ERROR_NONE)
+	{
+		EINA_LOG_ERR("Can't set screen in always on mode");
+	}
 
 	if (! _start_video_streaming(_appdata))
 	{
