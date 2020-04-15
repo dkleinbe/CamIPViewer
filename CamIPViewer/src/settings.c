@@ -245,37 +245,51 @@ _setting_item_cb(void *data, Evas_Object *obj, void *event_info EINA_UNUSED)
 	scroller = elm_scroller_add(naviframe);
 	evas_object_size_hint_align_set(scroller, EVAS_HINT_FILL, EVAS_HINT_FILL);
 	evas_object_size_hint_weight_set(scroller, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
-
+	//
+	// add scroller
+	//
 	layout = elm_layout_add(scroller);
 	if (! elm_layout_file_set(layout, edj_path, "entry_layout"))
 	{
-		dlog_print(DLOG_ERROR, "SETTINGS_UI", "Nananan");
+		EINA_LOG_ERR("Can't create setting item");
 	}
 	evas_object_size_hint_align_set(layout, EVAS_HINT_FILL, 0.0);
 	evas_object_size_hint_weight_set(layout, EVAS_HINT_EXPAND, 0.0);
-
+	//
+	// Add entry
+	//
 	entry = elm_entry_add(layout);
 	elm_entry_single_line_set(entry, EINA_TRUE);
 	elm_entry_scrollable_set(entry, EINA_TRUE);
 	elm_scroller_policy_set(entry, ELM_SCROLLER_POLICY_OFF, ELM_SCROLLER_POLICY_AUTO);
 	//evas_object_smart_callback_add(entry, "maxlength,reached", maxlength_reached, nf);
 
+	// limit input to 100 char
 	limit_filter_data.max_char_count = 0;
 	limit_filter_data.max_byte_count = 100;
 	elm_entry_markup_filter_append(entry, elm_entry_filter_limit_size, &limit_filter_data);
+
+	// set layout type
 	elm_entry_input_panel_layout_set(entry, _app_settings[setting_index].input_panel_layout);
+	// disable input prediction
+	elm_entry_prediction_allow_set(entry, false);
+
 	if (_app_settings[setting_index].input_panel_layout == ELM_INPUT_PANEL_LAYOUT_PASSWORD)
 		elm_entry_password_set(entry, true);
 
 	elm_entry_input_panel_return_key_type_set(entry, ELM_INPUT_PANEL_RETURN_KEY_TYPE_DONE);
 
+	// set input guide
 	elm_object_part_text_set(entry, "elm.guide", _app_settings[setting_index].guide);
 
+	// init entry with setting value
 	elm_entry_entry_set(entry, _app_settings[setting_index].value);
 	elm_entry_cursor_end_set(entry);
 
 	evas_object_size_hint_weight_set(entry, EVAS_HINT_EXPAND, EVAS_HINT_EXPAND);
 	evas_object_size_hint_align_set(entry, EVAS_HINT_FILL, EVAS_HINT_FILL);
+
+	// set entry callback
 	evas_object_smart_callback_add(entry, "activated", _entry_setting_enter_click, setting_item);
 
 	elm_object_part_content_set(layout, "entry_part", entry);
