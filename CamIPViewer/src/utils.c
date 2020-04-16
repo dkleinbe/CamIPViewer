@@ -336,6 +336,126 @@ _is_wifi_activated()
 
 }
 
+static char *
+_get_proxy_address(connection_h connection)
+{
+	bool is_wifi_activated = false;
+	int conn_err = -1;
+	char *proxy_address = NULL;
+
+	is_wifi_activated = _is_wifi_activated();
+	if (is_wifi_activated)
+	{
+		//
+		// if wifi connection exist set NO proxy
+		//
+		return NULL;
+	}
+	else
+	{
+		//
+		// if NO wifi connection set the proxy
+		//
+		// get proxy info
+		conn_err = connection_get_proxy(connection, CONNECTION_ADDRESS_FAMILY_IPV4, &proxy_address);
+
+		if ( ! (conn_err == CONNECTION_ERROR_NONE && proxy_address))
+		{
+			EINA_LOG_ERR("connection_get_proxy: CONNECTION_ERROR");
+			return NULL;
+		}
+	}
+
+	return proxy_address;
+}
+#if LIBCURL_VERSION_NUM >= 0x073d00
+/* In libcurl 7.61.0, support was added for extracting the time in plain
+   microseconds. Older libcurl versions are stuck in using 'double' for this
+   information so we complicate this example a bit by supporting either
+   approach. */
+#define TIME_IN_US 1
+#define TIMETYPE curl_off_t
+#define TIMEOPT CURLINFO_TOTAL_TIME_T
+#define MINIMAL_PROGRESS_FUNCTIONALITY_INTERVAL     3000000
+#else
+#define TIMETYPE double
+#define TIMEOPT CURLINFO_TOTAL_TIME
+#define MINIMAL_PROGRESS_FUNCTIONALITY_INTERVAL     3
+#endif
+/**
+ * default CURL progress structure
+ */
+typedef struct  {
+	TIMETYPE lastruntime; /* type depends on version, see above */
+	CURL                   *curl;
+	TIMETYPE                last_time;
+	curl_off_t              last_dlnow;
+	curl_xferinfo_callback  client_callback;
+	void                   *client_data;
+} default_progress_s;
+
+
+static default_progress_s _default_progress;
+
+static int
+_default_progress_callback_cb(void *clientp,
+		curl_off_t dltotal, curl_off_t dlnow,
+		curl_off_t ultotal, curl_off_t ulnow)
+{
+	default_progress_s *dp = (default_progress_s *)clientp;
+	CURLcode res;
+	TIMETYPE start;
+	TIMETYPE detla_time;
+	curl_off_t delta_dlnow;
+	CURL *curl = dp->curl;
+	int stop = 0;
+
+	EINA_LOG_DBG("Progress : dltotal: %lld dlnow: %lld ultotal: %lld, ulnow: %lld",
+			dltotal, dlnow, ultotal, ulnow);
+
+
+	res = curl_easy_getinfo(curl, CURLINFO_TOTAL_TIME, &start);
+	if(CURLE_OK == res)
+	{
+
+#ifdef TIME_IN_US
+		EINA_LOG_DBG("Time: %" CURL_FORMAT_CURL_OFF_T ".%06ld",
+				start / 1000000,
+				(long)(start % 1000000));
+#else // TIME_IN_US
+		EINA_LOG_DBG("TOTAL TIME: %1.f", start);
+#endif // TIME_IN_US
+
+	}
+	else
+	{
+		EINA_LOG_ERR("curl_easy_setopt(curl, CURLINFO_STARTTRANSFER_TIME, &start): %s (%d) %1.f",
+							   curl_easy_strerror(res), res, start);
+	}
+
+	delta_dlnow = dlnow - dp->last_dlnow;
+	dp->last_dlnow = dlnow;
+
+	detla_time = start - dp->last_time;
+	if (delta_dlnow != 0)
+		dp->last_time = start;
+	//
+	// if nothing received in 4 seconds stop request
+	//
+	EINA_LOG_DBG("delta:_dlow %lld delta_time: %1.f", delta_dlnow, detla_time);
+	if (delta_dlnow == 0 && detla_time > 4)
+	{
+		EINA_LOG_DBG("Stopping because of inactivity");
+		stop = 1;
+	}
+	// call user callback
+	if (dp->client_callback)
+	{
+		return (dp->client_callback(dp->client_data, dltotal,  dlnow, ultotal, ulnow) + stop);
+	}
+
+	return stop;
+}
 
  bool
  test_curl_connection(const char *url, const char *proxy_address)
@@ -453,18 +573,22 @@ init_curl_connection(
 		void *progress_callback,
 		void *progress_data)
 {
-	static char no_proxy = 0;
+
 	CURL *curl;
-	CURLcode error_code;
 	char *proxy_address;
+	CURLcode error_code;
+	int msg_level = EINA_LOG_LEVEL_INFO;
+#ifdef TO_DEL
+	static char no_proxy = 0;
+
 	int conn_err = -1;
 	bool is_wifi_activated = false;
+
 
 	//
 	// manage proxy settings
 	//
-	int msg_level = EINA_LOG_LEVEL_INFO;
-	is_wifi_activated = _is_wifi_activated();
+		is_wifi_activated = _is_wifi_activated();
 	if (is_wifi_activated)
 	{
 		//
@@ -482,11 +606,16 @@ init_curl_connection(
 
 		if ( ! (conn_err == CONNECTION_ERROR_NONE && proxy_address))
 		{
-			EINA_LOG_ERR("connection_get_proxy: CONNECTION_ERROR_NONE");
+			EINA_LOG_ERR("connection_get_proxy: CONNECTION_ERROR");
 			return NULL;
 		}
 	}
+#endif // TO_DEL
+
+	proxy_address = _get_proxy_address(connection);
+	//
 	// test connection to url
+	//
 	if (test_curl_connection(url, proxy_address) != true)
 	{
 		EINA_LOG_ERR("test_curl_connection: ERROR");
@@ -511,16 +640,21 @@ init_curl_connection(
 	EINA_LOG_DOM_DEFAULT(msg_level,
 	                   "error_code = curl_easy_setopt(curl, CURLOPT_URL, url): %s (%d)",
 	                   curl_easy_strerror(error_code), error_code);
-
+	//
 	// set proxy
-	error_code = curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address);
-	if (error_code != CURLE_OK)
+	//
+	if (proxy_address != NULL)
 	{
-		msg_level = EINA_LOG_LEVEL_ERR;
+		error_code = curl_easy_setopt(curl, CURLOPT_PROXY, proxy_address);
+		if (error_code != CURLE_OK)
+		{
+			msg_level = EINA_LOG_LEVEL_ERR;
+		}
+		EINA_LOG_DOM_DEFAULT(msg_level,
+						"curl_easy_setopt(curl, CURLOPT_PROXY, <%s>): %s (%d)", proxy_address,
+						curl_easy_strerror(error_code), error_code);
+		free(proxy_address);
 	}
-	EINA_LOG_DOM_DEFAULT(msg_level,
-					"curl_easy_setopt(curl, CURLOPT_PROXY, <%s>): %s (%d)", proxy_address,
-					curl_easy_strerror(error_code), error_code);
 	// set timeout
 	error_code = curl_easy_setopt(curl, CURLOPT_CONNECTTIMEOUT, 6L);
 	if (error_code != CURLE_OK)
@@ -566,43 +700,41 @@ init_curl_connection(
 	EINA_LOG_DOM_DEFAULT(msg_level,
 					   "curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_callback): %s (%d)",
 					   curl_easy_strerror(error_code), error_code);
+	//
+	// set progress callback
+	//
+	_default_progress.curl = curl;
+	_default_progress.client_callback = progress_callback;
+	_default_progress.client_data = progress_data;
 
-	if (progress_callback)
+	// Enable the built-in progress meter
+	error_code = curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
+	if (error_code != CURLE_OK)
 	{
-		// Enable the built-in progress meter
-		error_code = curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L);
-		if (error_code != CURLE_OK)
-		{
-			msg_level = EINA_LOG_LEVEL_ERR;
-		}
-		EINA_LOG_DOM_DEFAULT(msg_level,
-						   "curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L): %s (%d)",
-						   curl_easy_strerror(error_code), error_code);
-		// Set progress callback data
-		error_code = curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progress_data);
-		if (error_code != CURLE_OK)
-		{
-			msg_level = EINA_LOG_LEVEL_ERR;
-		}
-		EINA_LOG_DOM_DEFAULT(msg_level,
-						   "curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progress_data): %s (%d)",
-						   curl_easy_strerror(error_code), error_code);
-		// Set the progress callback
-		error_code = curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, progress_callback);
-		if (error_code != CURLE_OK)
-		{
-			msg_level = EINA_LOG_LEVEL_ERR;
-		}
-		EINA_LOG_DOM_DEFAULT(msg_level,
-						   "curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progress_callback): %s (%d)",
-						   curl_easy_strerror(error_code), error_code);
-
+		msg_level = EINA_LOG_LEVEL_ERR;
 	}
-
-	if (! is_wifi_activated)
+	EINA_LOG_DOM_DEFAULT(msg_level,
+					   "curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 0L): %s (%d)",
+					   curl_easy_strerror(error_code), error_code);
+	// Set progress callback data
+	error_code = curl_easy_setopt(curl, CURLOPT_XFERINFODATA, &_default_progress);
+	if (error_code != CURLE_OK)
 	{
-		free(proxy_address);
+		msg_level = EINA_LOG_LEVEL_ERR;
 	}
+	EINA_LOG_DOM_DEFAULT(msg_level,
+					   "curl_easy_setopt(curl, CURLOPT_XFERINFODATA, progress_data): %s (%d)",
+					   curl_easy_strerror(error_code), error_code);
+	// Set the progress callback
+	error_code = curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, _default_progress_callback_cb);
+	if (error_code != CURLE_OK)
+	{
+		msg_level = EINA_LOG_LEVEL_ERR;
+	}
+	EINA_LOG_DOM_DEFAULT(msg_level,
+					   "curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, progress_callback): %s (%d)",
+					   curl_easy_strerror(error_code), error_code);
+
 	return curl;
 }
 /*

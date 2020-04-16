@@ -165,6 +165,17 @@ _download_feedback_cb(void *data, Ecore_Thread *thread, void *msg_data)
 
     free(msg_data);
 }
+/**
+ * This function gets called by libcurl  with a frequent interval wWhile data is being transferred
+ * it will be called very frequently, and during slow periods like when nothing is being transferred
+ *  it can slow down to about one call per second
+ * @param clientp
+ * @param dltotal total number of bytes libcurl expects to download
+ * @param dlnow is the number of bytes downloaded so far
+ * @param ultotal the total number of bytes libcurl expects to upload in this transfer
+ * @param ulnow s the number of bytes uploaded so far
+ * @return Returning any other non-zero value from this callback will cause libcurl to abort the transfer and return
+ */
 static int
 _progress_callback_cb(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
 {
@@ -174,12 +185,10 @@ _progress_callback_cb(void *clientp, curl_off_t dltotal, curl_off_t dlnow, curl_
         return 0;
     }
 
-    EINA_LOG_DBG("Progress : dltotal: %lld dlnow: %lld ultotal: %lld, ulnow: %lld", dltotal, dlnow, ultotal, ulnow);
-
     appdata_s *ad = (appdata_s *)clientp;
     if (ad->cancel_requested)
     {
-    	EINA_LOG_DBG("in progress_cb(): cancelling");
+    	EINA_LOG_DBG("in progress_cb(): canceling");
     	ad->cancel_requested = false;
 
     	return 1;
