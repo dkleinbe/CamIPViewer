@@ -1,0 +1,99 @@
+
+
+<div class="form-header">
+    <% if (Object.keys(errors).length === 0) { %>
+      <h2>Input camera's settings</h2>
+    <% } else { %>
+      <h2 class="errors-heading">Oops, please correct the following:</h2>
+      <ul class="errors-list">
+        <% Object.values(errors).forEach(error => { %>
+          <li><%= error.msg %></li>
+        <% }) %>
+      </ul>
+    <% } %>
+  </div>
+  
+  <form method="post" action="/cameras" enctype='application/json' novalidate>
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <div class="form-field <%= errorMap.message ? 'form-field-invalid' : '' %>">
+      <label for="camera">Camera</label>
+      <select id="cam_id" name="cam_id" onchange="onSelectCamIdFct()" autofocus>
+        <option value="0">Cam #1</option>
+        <option value="1">Cam #2</option>
+        <option value="2">Cam #3</option>
+        <option value="3">Cam #4</option>
+      </select>
+      <% if (errors.message) { %>
+        <div class="error"><%= errors.message.msg %></div>
+        <% } %>
+    </div>
+    <div class="form-field <%= errorMap.cam_ip ? 'form-field-invalid' : '' %>">
+      <label for="IP">IP</label>
+      <input class="input" id="cam_ip" name="cam_ip" value="" ></input>
+      <% if (errors.cam_ip) { %>
+        <div class="error"><%= errors.cam_ip.msg %></div>
+        <% } %>
+    </div>
+    <div class="form-field <%= errorMap.cam_port ? 'form-field-invalid' : '' %>">
+      <label for="port">Port</label>
+      <input class="input" id="cam_port" name="cam_port" type="ip" value="<%= data.cam_port %>" />
+      <% if (errors.cam_port) { %>
+        <div class="error"><%= errors.cam_port.msg %></div>
+      <% } %>
+    </div>
+    <div class="form-field <%= errorMap.cam_port ? 'form-field-invalid' : '' %>">
+      <label for="port">Image path</label>
+      <input class="input" id="cam_image" name="cam_image" type="ip" value="<%= data.cam_port %>" />
+      <% if (errors.cam_port) { %>
+        <div class="error"><%= errors.cam_port.msg %></div>
+      <% } %>
+    </div>
+    <div class="form-field <%= errorMap.cam_port ? 'form-field-invalid' : '' %>">
+      <label for="port">Video path</label>
+      <input class="input" id="cam_video" name="cam_video" type="ip" value="<%= data.cam_port %>" />
+      <% if (errors.cam_port) { %>
+        <div class="error"><%= errors.cam_port.msg %></div>
+      <% } %>
+    </div>
+    <div class="form-field <%= errorMap.cam_port ? 'form-field-invalid' : '' %>">
+      <label for="port">User</label>
+      <input class="input" id="cam_user" name="cam_user" type="ip" value="<%= data.cam_port %>" />
+      <% if (errors.cam_port) { %>
+        <div class="error"><%= errors.cam_port.msg %></div>
+      <% } %>
+    </div>
+    <div class="form-field <%= errorMap.cam_port ? 'form-field-invalid' : '' %>">
+      <label for="port">Password</label>
+      <input class="input" id="cam_passwd" name="cam_passwd" type="password" value="<%= data.cam_port %>" />
+      <% if (errors.cam_port) { %>
+        <div class="error"><%= errors.cam_port.msg %></div>
+      <% } %>
+    </div>
+    <div class="form-actions">
+      <button class="btn" type="submit">Send</button>
+    </div>
+  </form>
+
+  <script type='text/javascript'>
+    function setCameraValues(camId) {
+
+      document.getElementById("cam_ip").value = cameras[camId].cam_ip
+      document.getElementById("cam_port").value = cameras[camId].cam_port  
+      document.getElementById("cam_image").value = cameras[camId].cam_image
+      document.getElementById("cam_video").value = cameras[camId].cam_video
+      document.getElementById("cam_user").value = cameras[camId].cam_user
+      document.getElementById("cam_passwd").value = cameras[camId].cam_passwd
+     
+
+    }
+    var cameras = <%- JSON.stringify(data.cameras) %>
+    // init form with camera 0 values
+    setCameraValues(0)
+  
+    function onSelectCamIdFct() {
+      //alert(cameras[0].cam_ip)
+      var camId = document.getElementById("cam_id").value
+      //alert(camId)
+      setCameraValues(camId)
+    }
+  </script>
