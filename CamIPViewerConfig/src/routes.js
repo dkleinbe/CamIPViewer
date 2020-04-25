@@ -1,7 +1,7 @@
 
 const express = require('express')
 const router = express.Router()
-const { check, validationResult } = require('express-validator/check')
+const { check, oneOf, validationResult } = require('express-validator/check')
 const { matchedData } = require('express-validator/filter')
 const fs = require('fs')
 
@@ -17,14 +17,15 @@ router.get('/cameras', (req, res) => {
   let rawdata = fs.readFileSync('camera.json')
   settings = JSON.parse(rawdata)
   
-  console.log(settings.cameras)
+  //console.log(settings.cameras)
 
-  //data = { "cam_ip": "192.1.2.3", "cam_port": "12345", "cameras": [ {"cam_ip": "192.1.2.66", "cam_port": "12345"}, {"cam_ip": "192.1.2.33", "cam_port": "12345"}] }
   var data = {}
   data.cameras = settings.cameras
-  console.log(data)
+  //console.log(data)
   res.render('cameras', {
     data: data,
+    onLoadFct: "initForm()",
+    settings: settings,
     errors: [],
     errorMap: {},
     csrfToken: req.csrfToken()
@@ -33,27 +34,27 @@ router.get('/cameras', (req, res) => {
 
 router.post('/cameras', [
   check('cam_id')
-    .isNumeric()
-    .withMessage('Port should be a number')
-    .trim(),
-  check('cam_id')
     .isAlphanumeric()
     .withMessage('Not a valid camera Id')
     .trim(),
-  check('cam_ip')
-    //.isIP()
-    //.withMessage('Not a valid IP')
-    .trim(),
+  //check('cam_ip').trim(),
+  oneOf([check('cam_ip').isIP(), check('cam_ip').isFQDN()], 'Not a valid hostname or IP'),
   check('cam_port')
     .isNumeric()
     .withMessage('Port should be a number')
-    .trim()
+    .trim(),
+  check('cam_image').trim(),
+  check('cam_video').trim(),
+  check('cam_user').trim(),
+  check('cam_passwd').trim()
 ], (req, res) => {
   const errors = validationResult(req)
-  if (!errors.isEmpty()) {
+  if (!errors.isEmpty()) { 
     //console.log('req: ', req.body)
     return res.render('cameras', {
       data: req.body,
+      settings: settings,
+      onLoadFct: "",
       errors: errors.array(),
       errorMap: errors.mapped(),
       csrfToken: req.csrfToken()
@@ -61,14 +62,12 @@ router.post('/cameras', [
   }
   //console.log('req: ', req.body)
   const data = matchedData(req)
-  console.log('Sanitized: ', data)
+  //console.log('Sanitized: ', data)
   // Homework: send sanitized data in an email or persist in a db
 
   settings.cameras[data.cam_id] = data
 
   let jsonDta = JSON.stringify(settings);
-  
-
 
   fs.writeFile('camera.json', jsonDta, err => {
     if (err) {
@@ -78,8 +77,16 @@ router.post('/cameras', [
     //file written successfully
   })
 
-  req.flash('success', 'Thanks for the message! I‘ll be in touch :)')
-  res.redirect('/cameras')
+  //req.flash('success', 'Thanks for the message! I‘ll be in touch :)')
+  res.render('cameras', {
+    data: req.body,
+    settings: settings,
+    onLoadFct: "",
+    errors: errors.array(),
+    errorMap: errors.mapped(),
+    csrfToken: req.csrfToken()
+  })
+  //res.redirect('/cameras')
 })
 
 router.get('/contact', (req, res) => {
