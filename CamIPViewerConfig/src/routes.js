@@ -9,7 +9,9 @@ const content = 'Some content!'
 settings = {}
 
 router.get('/', (req, res) => {
-  res.render('index')
+  res.render('index', {
+    onLoadFct: ""
+  })
 })
 
 router.get('/cameras', (req, res) => {

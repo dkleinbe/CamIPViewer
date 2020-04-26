@@ -1,4 +1,8 @@
 <script type='text/javascript'>
+  cameras = <%- JSON.stringify(settings.cameras) %>
+
+
+
   function setCameraValues(camId) {
 
     document.getElementById("cam_ip").value = cameras[camId].cam_ip
@@ -8,12 +12,17 @@
     document.getElementById("cam_user").value = cameras[camId].cam_user
     document.getElementById("cam_passwd").value = cameras[camId].cam_passwd
    
-
   }
-  cameras = <%- JSON.stringify(settings.cameras) %>
   
   function initForm() {
     setCameraValues(0) 
+
+    form = document.getElementById("camera_form");
+    formDirty = false
+    form.addEventListener("input", function () {
+      formDirty = true
+      console.log("Form has changed!");
+    });
   }
   function onSelectCamIdFct() {
     //alert(cameras[0].cam_ip)
@@ -22,10 +31,28 @@
     setCameraValues(camId)
   }
 
+  function copyCamera() {
+    let camId = document.getElementById("cam_id").value
+    currentCam = cameras[camId]
+  }
+
+  function pasteCamera() {
+    let camId = document.getElementById("cam_id").value
+
+    document.getElementById("cam_ip").value = currentCam.cam_ip
+    document.getElementById("cam_port").value = currentCam.cam_port  
+    document.getElementById("cam_image").value = currentCam.cam_image
+    document.getElementById("cam_video").value = currentCam.cam_video
+    document.getElementById("cam_user").value = currentCam.cam_user
+    document.getElementById("cam_passwd").value = currentCam.cam_passwd
+
+  }
+
+  
   
 </script>
 
-<div class="form-header">
+<div class="form-header container">
     <% if (Object.keys(errors).length === 0) { %>
       <h2>Input camera's settings</h2>
     <% } else { %>
@@ -37,65 +64,96 @@
       </ul>
     <% } %>
   </div>
-  
+  <div class="row">
+    <button class="btn-inline" onclick="copyCamera()">Copy</button>
+    <button class="btn-inline" onclick="pasteCamera()">Paste</button>
+  </div>
   <form id="camera_form" method="post" action="/cameras" enctype='application/json' novalidate>
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
     <div class="form-field <%= errorMap.message ? 'form-field-invalid' : '' %>">
-      <label for="camera">Camera</label>
-      <select id="cam_id" name="cam_id" onchange="onSelectCamIdFct()" autofocus>
-        <option value="0" <%- data.cam_id == 0 ? 'selected' : '' %>>Cam #1</option>
-        <option value="1" <%- data.cam_id == 1 ? 'selected' : '' %>>Cam #2</option>
-        <option value="2" <%- data.cam_id == 2 ? 'selected' : '' %>>Cam #3</option>
-        <option value="3" <%- data.cam_id == 3 ? 'selected' : '' %>>Cam #4</option>
-      </select>
-      <% if (errors.message) { %>
-        <div class="error"><%= errors.message.msg %></div>
-        <% } %>
+      <div class="col-25">
+        <label for="camera">Camera</label>
+      </div>
+      <div class="col-75">
+        <select id="cam_id" name="cam_id" onchange="onSelectCamIdFct()" autofocus>
+          <option value="0" <%- data.cam_id == 0 ? 'selected' : '' %>>Cam #1</option>
+          <option value="1" <%- data.cam_id == 1 ? 'selected' : '' %>>Cam #2</option>
+          <option value="2" <%- data.cam_id == 2 ? 'selected' : '' %>>Cam #3</option>
+          <option value="3" <%- data.cam_id == 3 ? 'selected' : '' %>>Cam #4</option>
+        </select>
+        <% if (errors.message) { %>
+          <div class="error"><%= errors.message.msg %></div>
+          <% } %>
+      </div>
     </div>
     <div class="form-field <%= errorMap.cam_ip ? 'form-field-invalid' : '' %>">
-      <label for="IP">IP</label>
-      <input class="input" id="cam_ip" name="cam_ip" type="ip" value="<%= data.cam_ip %>" ></input>
-      <% if (errors.cam_ip) { %>
-        <div class="error"><%= errors.cam_ip.msg %></div>
+      <div class="col-25">
+        <label for="IP">IP</label>
+      </div>
+      <div class="col-75">
+        <input class="input" id="cam_ip" name="cam_ip" type="ip" value="<%= data.cam_ip %>" ></input>
+        <% if (errors.cam_ip) { %>
+          <div class="error"><%= errors.cam_ip.msg %></div>
+          <% } %>
+      </div>
+    </div>
+    <div class="form-field <%= errorMap.cam_port ? 'form-field-invalid' : '' %>">
+      <div class="col-25">
+        <label for="port">Port</label>
+      </div>
+      <div class="col-75">
+        <input class="input" id="cam_port" name="cam_port" type="ip" value="<%= data.cam_port %>" />
+        <% if (errors.cam_port) { %>
+          <div class="error"><%= errors.cam_port.msg %></div>
+        <% } %>
+      </div>
+    </div>
+    <div class="form-field <%= errorMap.cam_port ? 'form-field-invalid' : '' %>">
+      <div class="col-25">
+        <label for="port">Image path</label>
+      </div>
+      <div class="col-75">
+        <input class="input" id="cam_image" name="cam_image" type="ip" value="<%= data.cam_image %>" />
+        <% if (errors.cam_port) { %>
+          <div class="error"><%= errors.cam_port.msg %></div>
         <% } %>
     </div>
-    <div class="form-field <%= errorMap.cam_port ? 'form-field-invalid' : '' %>">
-      <label for="port">Port</label>
-      <input class="input" id="cam_port" name="cam_port" type="ip" value="<%= data.cam_port %>" />
-      <% if (errors.cam_port) { %>
-        <div class="error"><%= errors.cam_port.msg %></div>
-      <% } %>
     </div>
     <div class="form-field <%= errorMap.cam_port ? 'form-field-invalid' : '' %>">
-      <label for="port">Image path</label>
-      <input class="input" id="cam_image" name="cam_image" type="ip" value="<%= data.cam_image %>" />
-      <% if (errors.cam_port) { %>
-        <div class="error"><%= errors.cam_port.msg %></div>
-      <% } %>
+      <div class="col-25">
+        <label for="port">Video path</label>
+      </div>
+        <div class="col-75">
+        <input class="input" id="cam_video" name="cam_video" type="ip" value="<%= data.cam_video %>" />
+        <% if (errors.cam_port) { %>
+          <div class="error"><%= errors.cam_port.msg %></div>
+        <% } %>
+      </div>
     </div>
     <div class="form-field <%= errorMap.cam_port ? 'form-field-invalid' : '' %>">
-      <label for="port">Video path</label>
-      <input class="input" id="cam_video" name="cam_video" type="ip" value="<%= data.cam_video %>" />
-      <% if (errors.cam_port) { %>
-        <div class="error"><%= errors.cam_port.msg %></div>
-      <% } %>
+      <div class="col-25">
+        <label for="port">User</label>
+      </div>
+      <div class="col-75">
+        <input class="input" id="cam_user" name="cam_user" type="ip" value="<%= data.cam_user %>" />
+        <% if (errors.cam_port) { %>
+          <div class="error"><%= errors.cam_port.msg %></div>
+        <% } %>
+      </div>
     </div>
     <div class="form-field <%= errorMap.cam_port ? 'form-field-invalid' : '' %>">
-      <label for="port">User</label>
-      <input class="input" id="cam_user" name="cam_user" type="ip" value="<%= data.cam_user %>" />
-      <% if (errors.cam_port) { %>
-        <div class="error"><%= errors.cam_port.msg %></div>
-      <% } %>
-    </div>
-    <div class="form-field <%= errorMap.cam_port ? 'form-field-invalid' : '' %>">
-      <label for="port">Password</label>
-      <input class="input" id="cam_passwd" name="cam_passwd" type="password" value="<%= data.cam_passwd %>" />
-      <% if (errors.cam_port) { %>
-        <div class="error"><%= errors.cam_port.msg %></div>
-      <% } %>
+      <div class="col-25">
+        <label for="port">Password</label>
+      </div>
+      <div class="col-75">
+        <input class="input" id="cam_passwd" name="cam_passwd" type="password" value="<%= data.cam_passwd %>" />
+        <% if (errors.cam_port) { %>
+          <div class="error"><%= errors.cam_port.msg %></div>
+        <% } %>
+      </div>
     </div>
     <div class="form-actions">
-      <button class="btn" type="submit">Send</button>
+      <button class="btn" type="submit">Save</button>
     </div>
   </form>
 
