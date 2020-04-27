@@ -20,14 +20,17 @@ router.get('/cameras', (req, res) => {
   settings = JSON.parse(rawdata)
   
   //console.log(settings.cameras)
-
+  //
+  // Prepare data payload 
+  // 
   var data = {}
   data.cameras = settings.cameras
+  data.currentCamID = 0
+
   //console.log(data)
   res.render('cameras', {
     data: data,
     onLoadFct: "initForm()",
-    settings: settings,
     errors: [],
     errorMap: {},
     csrfToken: req.csrfToken()
@@ -62,12 +65,13 @@ router.post('/cameras', [
       csrfToken: req.csrfToken()
     })
   }
-  //console.log('req: ', req.body)
-  const data = matchedData(req)
+  
+  const reqData = matchedData(req)
   //console.log('Sanitized: ', data)
-  // Homework: send sanitized data in an email or persist in a db
-
-  settings.cameras[data.cam_id] = data
+  //
+  // Update settings and write the file
+  //
+  settings.cameras[reqData.cam_id] = reqData
 
   let jsonDta = JSON.stringify(settings);
 
@@ -79,11 +83,17 @@ router.post('/cameras', [
     //file written successfully
   })
 
+  //
+  // Prepare data payload 
+  // 
+  var data = {}
+  data.cameras = settings.cameras
+  data.currentCamID = reqData.cam_id
+
   //req.flash('success', 'Thanks for the message! I‘ll be in touch :)')
   res.render('cameras', {
-    data: req.body,
-    settings: settings,
-    onLoadFct: "",
+    data: data,
+    onLoadFct: "initForm()",
     errors: errors.array(),
     errorMap: errors.mapped(),
     csrfToken: req.csrfToken()

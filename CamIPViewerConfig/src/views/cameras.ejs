@@ -1,7 +1,7 @@
 <script type='text/javascript'>
-  cameras = <%- JSON.stringify(settings.cameras) %>
-
-
+  
+  cameras = <%- JSON.stringify(data.cameras) %>
+  currentCamID = <%- JSON.stringify(data.currentCamID) %>
 
   function setCameraValues(camId) {
 
@@ -12,23 +12,39 @@
     document.getElementById("cam_user").value = cameras[camId].cam_user
     document.getElementById("cam_passwd").value = cameras[camId].cam_passwd
    
+    currentCamID = camId
+    isFormDirty = false
   }
   
   function initForm() {
-    setCameraValues(0) 
+    setCameraValues(currentCamID) 
+
+    initModal()
 
     form = document.getElementById("camera_form");
-    formDirty = false
+    currentCamID = document.getElementById("cam_id").value
+
+    isFormDirty = false
     form.addEventListener("input", function () {
-      formDirty = true
-      console.log("Form has changed!");
+      if (currentCamID != document.getElementById("cam_id").value) {
+        console.log("Camera is changing changed!");  
+      }
+      else {
+        isFormDirty = true
+        console.log("Form has changed!");
+      }
     });
   }
   function onSelectCamIdFct() {
     //alert(cameras[0].cam_ip)
     var camId = document.getElementById("cam_id").value
-    //alert(camId)
-    setCameraValues(camId)
+    
+    if (isFormDirty) {
+      modal.style.display = "block";
+    }
+    else {
+      setCameraValues(camId)
+    }
   }
 
   function copyCamera() {
@@ -46,12 +62,42 @@
     document.getElementById("cam_user").value = currentCam.cam_user
     document.getElementById("cam_passwd").value = currentCam.cam_passwd
 
+    isFormDirty = true
   }
 
-  
-  
-</script>
+  function initModal() {
+    // Get the modal
+    modal = document.getElementById("myModal");
 
+  }
+  
+function cancelChange() {
+  console.log('Canceling changes')
+  document.getElementById("cam_id").value = currentCamId
+  modal.style.display = "none";
+}
+
+function continueChange() {
+  console.log('Continue changes')
+  modal.style.display = "none";
+  setCameraValues(document.getElementById("cam_id").value)
+}
+
+</script>
+<!-- The Modal -->
+<div id="myModal" class="modal">
+
+  <!-- Modal content -->
+  <div class="modal-content">
+    <p>Camera has been modified, Cancel the changes?</p>
+    <div class="row">
+      <button class="btn-inline" onclick="cancelChange()">Cancel</button>
+      <button class="btn-inline" onclick="continueChange()">Continue</button>
+    </div>
+  </div>
+
+</div>
+<!-- The form -->
 <div class="form-header container">
     <% if (Object.keys(errors).length === 0) { %>
       <h2>Input camera's settings</h2>
@@ -64,9 +110,11 @@
       </ul>
     <% } %>
   </div>
-  <div class="row">
-    <button class="btn-inline" onclick="copyCamera()">Copy</button>
-    <button class="btn-inline" onclick="pasteCamera()">Paste</button>
+  <div class="container">
+    <div class="copy-paste">
+      <button button class="btn-inline" onclick="copyCamera()">Copy</button>
+      <button class="btn-inline" onclick="pasteCamera()">Paste</button>
+    </div>
   </div>
   <form id="camera_form" method="post" action="/cameras" enctype='application/json' novalidate>
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
@@ -76,10 +124,10 @@
       </div>
       <div class="col-75">
         <select id="cam_id" name="cam_id" onchange="onSelectCamIdFct()" autofocus>
-          <option value="0" <%- data.cam_id == 0 ? 'selected' : '' %>>Cam #1</option>
-          <option value="1" <%- data.cam_id == 1 ? 'selected' : '' %>>Cam #2</option>
-          <option value="2" <%- data.cam_id == 2 ? 'selected' : '' %>>Cam #3</option>
-          <option value="3" <%- data.cam_id == 3 ? 'selected' : '' %>>Cam #4</option>
+          <option value="0" <%- data.currentCamID == 0 ? 'selected' : '' %>>Cam #1</option>
+          <option value="1" <%- data.currentCamID == 1 ? 'selected' : '' %>>Cam #2</option>
+          <option value="2" <%- data.currentCamID == 2 ? 'selected' : '' %>>Cam #3</option>
+          <option value="3" <%- data.currentCamID == 3 ? 'selected' : '' %>>Cam #4</option>
         </select>
         <% if (errors.message) { %>
           <div class="error"><%= errors.message.msg %></div>
